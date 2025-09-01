@@ -1,4 +1,4 @@
-import { Building2, Calendar, Edit, Eye, MapPin, Plus, Trash2 } from 'lucide-react';
+import { Building2, Edit, Eye, MapPin, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { deleteArea, fetchAreas, selectAreas, selectAreasError, selectAreasLoading, selectAreasPagination, toggleAreaStatus } from '../../store/slices/areaSlice';
@@ -18,7 +18,6 @@ const AreaManagement = () => {
   const areasError = useSelector(selectAreasError);
   const pagination = useSelector(selectAreasPagination);
 
-  // Debounce search term
   useEffect(() => {
     if (searchTerm !== debouncedSearchTerm) {
       setIsSearching(true);
@@ -35,14 +34,12 @@ const AreaManagement = () => {
     };
   }, [searchTerm, debouncedSearchTerm]);
 
-  // Reset to page 1 when search term changes
   useEffect(() => {
     if (debouncedSearchTerm !== searchTerm) {
       setCurrentPage(1);
     }
   }, [debouncedSearchTerm, searchTerm]);
 
-  // Fetch areas on component mount and when debounced search/page changes
   useEffect(() => {
     dispatch(fetchAreas({ 
       page: currentPage, 
@@ -52,7 +49,6 @@ const AreaManagement = () => {
   }, [dispatch, currentPage, debouncedSearchTerm]);
 
   const handleAddAreaSuccess = () => {
-    // This function is called when area is successfully created via API
     console.log('Area created successfully via API');
     setIsAddModalOpen(false);
   };
@@ -87,14 +83,7 @@ const AreaManagement = () => {
 
   return (
     <div className="max-w-full">
-      {/* Loading State */}
-      {areasLoading && (
-        <div className="flex justify-center items-center py-8">
-          <div className="text-lg text-gray-600">Loading areas...</div>
-        </div>
-      )}
 
-      {/* Error State */}
       {areasError && (
         <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
           <div className="text-red-800">
@@ -103,7 +92,6 @@ const AreaManagement = () => {
         </div>
       )}
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-6">
         <Card>
           <CardContent className="p-6">
@@ -152,7 +140,6 @@ const AreaManagement = () => {
         </Card>
       </div>
 
-      {/* Search and Add Button */}
       <Card className="mb-6">
         <CardContent className="p-4 md:p-6">
           <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between">
@@ -177,7 +164,6 @@ const AreaManagement = () => {
         </CardContent>
       </Card>
 
-      {/* Areas Table */}
       <Card>
         <CardContent className="p-0 overflow-auto h-[440px]">
           <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
@@ -196,7 +182,7 @@ const AreaManagement = () => {
               {areasLoading ? (
                 <TableRow>
                   <TableCell colSpan={6} className="p-0">
-                    <LoadingTable columns={6} rows={5} className="border-0" />
+                    <LoadingTable columns={6} rows={7} className="border-0" />
                   </TableCell>
                 </TableRow>
               ) : areasError ? (
@@ -231,27 +217,22 @@ const AreaManagement = () => {
                     </div>
                   </TableCell>
 
-                  {/* State */}
                   <TableCell>
                     <span className="text-sm text-gray-900 truncate">{area.state}</span>
                   </TableCell>
 
-                  {/* City */}
                   <TableCell>
                     <span className="text-sm text-gray-900 truncate">{area.city}</span>
                   </TableCell>
 
-                  {/* Status */}
                   <TableCell>
                     {getStatusBadge(area.isActive, area._id)}
                   </TableCell>
 
-                  {/* Created Date */}
                   <TableCell>
                     <span className="text-sm text-gray-900 truncate">{formatDate(area.createdAt)}</span>
                   </TableCell>
 
-                  {/* Actions */}
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end space-x-0.5">
                       <Button
@@ -290,7 +271,6 @@ const AreaManagement = () => {
         </CardContent>
       </Card>
 
-      {/* Pagination */}
       {pagination.totalPages > 1 && (
         <Card className="mt-6">
           <CardContent className="p-0">
@@ -306,7 +286,6 @@ const AreaManagement = () => {
         </Card>
       )}
 
-      {/* Add Area Modal */}
       <AddAreaModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
