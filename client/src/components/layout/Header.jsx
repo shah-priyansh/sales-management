@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Menu, X, User, LogOut, Settings } from 'lucide-react';
-import { logoutUser } from '../../store/slices/authSlice';
+import { LogOut, Menu, Settings, User } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
+import { logoutUser } from '../../store/slices/authSlice';
 
 const Header = ({ user, onMenuClick }) => {
   const [userMenuOpen, setUserMenuOpen] = useState(false);

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import Sidebar from './Sidebar';
-import Header from './Header';
-import { selectUser } from '../../store/slices/authSlice';
 import { useSelector } from 'react-redux';
+import { Outlet } from 'react-router-dom';
+import { selectUser } from '../../store/slices/authSlice';
+import Header from './Header';
+import Sidebar from './Sidebar';
 
 const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);

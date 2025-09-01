@@ -1,18 +1,15 @@
-import React, { useState, useMemo } from 'react';
-import { 
-  Search, 
-  Filter, 
-  MoreVertical, 
-  Edit, 
-  Trash2, 
-  Eye, 
-  UserCheck, 
-  MapPin,
+import {
+  Calendar,
+  Edit,
+  Eye,
   Mail,
+  MapPin,
   Phone,
-  Calendar
+  Search,
+  Trash2,
+  UserCheck
 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import React, { useMemo, useState } from 'react';
 
 const UserList = ({ users = [], onEdit, onDelete, onView }) => {
   const [searchTerm, setSearchTerm] = useState('');

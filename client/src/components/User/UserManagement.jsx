@@ -1,8 +1,8 @@
+import { Calendar, Edit, Eye, Plus, Search, Trash2, User } from 'lucide-react';
 import React, { useState } from 'react';
-import { Plus, Search, Edit, Trash2, Eye, User, Mail, Phone, Calendar } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
-import { addUser, deleteUser, toggleUserStatus, selectUsers } from '../../store/slices/userSlice';
-import { Button, Input, Card, CardContent, Badge } from '../ui';
+import { addUser, deleteUser, selectUsers, toggleUserStatus } from '../../store/slices/userSlice';
+import { Badge, Button, Card, CardContent, Input } from '../ui';
 import AddUserModal from './AddUserModal';
 
 const UserManagement = () => {
