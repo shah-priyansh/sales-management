@@ -1,42 +1,66 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Search, Edit, Trash2, Eye, MapPin, Building2, Calendar } from 'lucide-react';
+import { Building2, Calendar, Edit, Eye, MapPin, Plus, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { addArea, deleteArea, toggleAreaStatus, selectAreas, fetchAreas, selectAreasLoading, selectAreasError, selectAreasPagination } from '../../store/slices/areaSlice';
-import { Button, Input, Card, CardContent, Badge, Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '../ui';
-import AddAreaModal from './AddAreaModal';
+import { deleteArea, fetchAreas, selectAreas, selectAreasError, selectAreasLoading, selectAreasPagination, toggleAreaStatus } from '../../store/slices/areaSlice';
 import { formatDate } from '../../utils/authUtils';
+import { Badge, Button, Card, CardContent, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Pagination, LoadingTable, EmptyTable, ErrorTable, SearchInput } from '../ui';
+import AddAreaModal from './AddAreaModal';
 
 const AreaManagement = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [isSearching, setIsSearching] = useState(false);
   const dispatch = useDispatch();
   const areas = useSelector(selectAreas);
   const areasLoading = useSelector(selectAreasLoading);
   const areasError = useSelector(selectAreasError);
   const pagination = useSelector(selectAreasPagination);
 
-  // Fetch areas on component mount and when search/page changes
+  // Debounce search term
+  useEffect(() => {
+    if (searchTerm !== debouncedSearchTerm) {
+      setIsSearching(true);
+    }
+    
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setIsSearching(false);
+    }, 500); // 500ms delay
+
+    return () => {
+      clearTimeout(timer);
+      setIsSearching(false);
+    };
+  }, [searchTerm, debouncedSearchTerm]);
+
+  // Reset to page 1 when search term changes
+  useEffect(() => {
+    if (debouncedSearchTerm !== searchTerm) {
+      setCurrentPage(1);
+    }
+  }, [debouncedSearchTerm, searchTerm]);
+
+  // Fetch areas on component mount and when debounced search/page changes
   useEffect(() => {
     dispatch(fetchAreas({ 
       page: currentPage, 
-      search: searchTerm,
+      search: debouncedSearchTerm,
       limit: 20 
     }));
-  }, [dispatch, currentPage, searchTerm]);
-
-  // Filter areas based on search (client-side filtering for better UX)
-  const filteredAreas = areas.filter(area =>
-    area.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    area.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    area.state?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    area.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  }, [dispatch, currentPage, debouncedSearchTerm]);
 
   const handleAddAreaSuccess = () => {
     // This function is called when area is successfully created via API
     console.log('Area created successfully via API');
     setIsAddModalOpen(false);
+  };
+
+  const handleClearSearch = () => {
+    setSearchTerm('');
+    setDebouncedSearchTerm('');
+    setCurrentPage(1);
   };
 
   const handleDeleteArea = (areaId) => {
@@ -62,7 +86,7 @@ const AreaManagement = () => {
   };
 
   return (
-    <div className="p-6 min-h-screen">
+    <div className="max-w-full">
       {/* Loading State */}
       {areasLoading && (
         <div className="flex justify-center items-center py-8">
@@ -80,7 +104,7 @@ const AreaManagement = () => {
       )}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-6">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center">
@@ -130,18 +154,16 @@ const AreaManagement = () => {
 
       {/* Search and Add Button */}
       <Card className="mb-6">
-        <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <Input
-                type="text"
-                placeholder="Search areas..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+        <CardContent className="p-4 md:p-6">
+          <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between">
+            <SearchInput
+              value={searchTerm}
+              onChange={setSearchTerm}
+              onClear={handleClearSearch}
+              placeholder="Search areas..."
+              loading={areasLoading}
+              searching={isSearching}
+            />
             <Button
               onClick={() => setIsAddModalOpen(true)}
               variant="gradient"
@@ -157,64 +179,66 @@ const AreaManagement = () => {
 
       {/* Areas Table */}
       <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[200px]">Area</TableHead>
-                <TableHead>State</TableHead>
-                <TableHead>City</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
+        <CardContent className="p-0 overflow-auto h-[440px]">
+          <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+            <Table className="w-full table-fixed">
+              <TableHeader className="sticky top-0">
+                <TableRow>
+                  <TableHead className="w-[25%]">Area</TableHead>
+                  <TableHead className="w-[15%]">State</TableHead>
+                  <TableHead className="w-[15%]">City</TableHead>
+                  <TableHead className="w-[10%]">Status</TableHead>
+                  <TableHead className="w-[20%]">Created</TableHead>
+                  <TableHead className="w-[15%] text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
             <TableBody>
               {areasLoading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8">
-                    <div className="text-gray-500">Loading areas...</div>
+                  <TableCell colSpan={6} className="p-0">
+                    <LoadingTable columns={6} rows={5} className="border-0" />
                   </TableCell>
                 </TableRow>
-              ) : filteredAreas.length === 0 ? (
+              ) : areasError ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8">
-                    <div className="text-gray-500">
-                      {searchTerm ? 'No areas found matching your search.' : 'No areas found. Create your first area to get started.'}
-                    </div>
+                  <TableCell colSpan={6} className="p-0">
+                    <ErrorTable 
+                      columns={6} 
+                      message="Failed to load areas"
+                      description="There was an error loading the areas. Please try again."
+                      onRetry={() => dispatch(fetchAreas({ page: currentPage, search: debouncedSearchTerm, limit: 20 }))}
+                      className="border-0"
+                    />
+                  </TableCell>
+                </TableRow>
+              ) : areas.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="p-0">
+                    <EmptyTable 
+                      columns={6}
+                      message={debouncedSearchTerm ? 'No areas found' : 'No areas yet'}
+                      description={debouncedSearchTerm ? 'No areas match your search criteria.' : 'Create your first area to get started.'}
+                      className="border-0"
+                    />
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredAreas.map((area) => (
+                areas.map((area) => (
                 <TableRow key={area._id}>
                   <TableCell className="font-medium">
-                    <div className="flex items-center">
-                      <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
-                        <MapPin className="h-5 w-5 text-white" />
-                      </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
-                          {area.name}
-                        </div>
-                
-                      </div>
+                    <div className="text-sm font-medium text-gray-900 truncate">
+                      {area.name}
                     </div>
                   </TableCell>
 
                   {/* State */}
                   <TableCell>
-                    <div className="flex items-center">
-                      <MapPin className="h-4 w-4 text-gray-400 mr-2" />
-                      <span className="text-sm text-gray-900">{area.state}</span>
-                    </div>
+                    <span className="text-sm text-gray-900 truncate">{area.state}</span>
                   </TableCell>
 
                   {/* City */}
                   <TableCell>
-                    <div className="flex items-center">
-                      <Building2 className="h-4 w-4 text-gray-400 mr-2" />
-                      <span className="text-sm text-gray-900">{area.city}</span>
-                    </div>
+                    <span className="text-sm text-gray-900 truncate">{area.city}</span>
                   </TableCell>
 
                   {/* Status */}
@@ -224,39 +248,36 @@ const AreaManagement = () => {
 
                   {/* Created Date */}
                   <TableCell>
-                    <div className="flex items-center">
-                      <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                      {formatDate(area.createdAt)}
-                    </div>
+                    <span className="text-sm text-gray-900 truncate">{formatDate(area.createdAt)}</span>
                   </TableCell>
 
                   {/* Actions */}
                   <TableCell className="text-right">
-                    <div className="flex items-center justify-end space-x-2">
+                    <div className="flex items-center justify-end space-x-0.5">
                       <Button
                         variant="ghost"
-                        size="icon"
-                        className="text-blue-600 hover:text-blue-900 hover:bg-blue-50"
+                        size="sm"
+                        className="h-7 w-7 p-0 text-blue-600 hover:text-blue-900 hover:bg-blue-50"
                         title="View area"
                       >
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-3 w-3" />
                       </Button>
                       <Button
                         variant="ghost"
-                        size="icon"
-                        className="text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50"
+                        size="sm"
+                        className="h-7 w-7 p-0 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50"
                         title="Edit area"
                       >
-                        <Edit className="h-4 w-4" />
+                        <Edit className="h-3 w-3" />
                       </Button>
                       <Button
                         variant="ghost"
-                        size="icon"
+                        size="sm"
                         onClick={() => handleDeleteArea(area._id)}
-                        className="text-red-600 hover:text-red-900 hover:bg-red-50"
+                        className="h-7 w-7 p-0 text-red-600 hover:text-red-900 hover:bg-red-50"
                         title="Delete area"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>
                   </TableCell>
@@ -264,53 +285,23 @@ const AreaManagement = () => {
                 ))
               )}
             </TableBody>
-          </Table>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
       {/* Pagination */}
       {pagination.totalPages > 1 && (
         <Card className="mt-6">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-700">
-                Showing {((pagination.currentPage - 1) * pagination.limit) + 1} to {Math.min(pagination.currentPage * pagination.limit, pagination.total)} of {pagination.total} areas
-              </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={pagination.currentPage === 1}
-                >
-                  Previous
-                </Button>
-                <div className="flex items-center space-x-1">
-                  {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                    const pageNum = i + 1;
-                    return (
-                      <Button
-                        key={pageNum}
-                        variant={pagination.currentPage === pageNum ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setCurrentPage(pageNum)}
-                        className="w-8 h-8 p-0"
-                      >
-                        {pageNum}
-                      </Button>
-                    );
-                  })}
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, pagination.totalPages))}
-                  disabled={pagination.currentPage === pagination.totalPages}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
+          <CardContent className="p-0">
+            <Pagination
+              currentPage={pagination.currentPage}
+              totalPages={pagination.totalPages}
+              total={pagination.total}
+              limit={pagination.limit}
+              onPageChange={setCurrentPage}
+              loading={areasLoading}
+            />
           </CardContent>
         </Card>
       )}

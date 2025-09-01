@@ -37,3 +37,6 @@ export {
   TableCell,
   TableCaption,
 } from './table'
+export { default as Pagination } from './pagination'
+export { LoadingTable, EmptyTable, ErrorTable } from './loading-table'
+export { default as SearchInput } from './search-input'

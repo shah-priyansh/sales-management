@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { addUser, deleteUser, selectUsers, toggleUserStatus } from '../../store/slices/userSlice';
 import { Badge, Button, Card, CardContent, Input, Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '../ui';
-import AddUserModal from './AddUserModal';
+import AddUserModal from './AddEmployeeModal';
 
 const UserManagement = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);

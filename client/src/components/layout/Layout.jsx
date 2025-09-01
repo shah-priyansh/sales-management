@@ -15,17 +15,15 @@ const Layout = () => {
       {/* Sidebar */}
       <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
       
-      {/* Main content */}
       <div className="flex-1  focus:outline-none">
-        {/* Header */}
         <Header 
           user={user} 
           onMenuClick={() => setSidebarOpen(true)}
         />
         
         {/* Page content */}
-        <main className="flex-1 relative z-0 overflow-y-auto py-6">
-          <div className="mx-auto px-4 sm:px-6 md:px-8">
+        <main className="flex-1 relative z-0 overflow-y-auto">
+          <div className="mx-auto px-4 sm:px-6 md:px-8 py-6">
             <Outlet />
           </div>
         </main>

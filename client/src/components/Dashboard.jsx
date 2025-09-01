@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Users, UserCheck, MapPin, TrendingUp, Clock } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { useAuth } from '../contexts/AuthContext';
+import { useSelector } from 'react-redux';
+import { selectUser } from '../store/slices/authSlice';
 
 const Dashboard = () => {
-  const { user } = useAuth();
   const [stats, setStats] = useState(null);
   const [recentData, setRecentData] = useState({ salesmen: [], clients: [] });
   const [loading, setLoading] = useState(true);
+  const user = useSelector(selectUser);
 
   useEffect(() => {
     fetchDashboardData();
