@@ -168,97 +168,97 @@ const AreaManagement = () => {
         <CardContent className="p-0">
           <div className="overflow-auto h-[440px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
             <Table className="w-full table-fixed border-collapse">
-              <TableHeader className="sticky top-0 bg-white z-10 shadow-sm">
-                <TableRow>
-                  <TableHead className="w-[25%] bg-white border-b px-4 py-3 text-left">Area</TableHead>
-                  <TableHead className="w-[15%] bg-white border-b px-4 py-3 text-left">State</TableHead>
-                  <TableHead className="w-[15%] bg-white border-b px-4 py-3 text-left">City</TableHead>
-                  <TableHead className="w-[10%] bg-white border-b px-4 py-3 text-left">Status</TableHead>
-                  <TableHead className="w-[20%] bg-white border-b px-4 py-3 text-left">Created</TableHead>
-                  <TableHead className="w-[15%] bg-white border-b px-4 py-3 text-right">Actions</TableHead>
+              <TableHeader className="sticky top-0 bg-white z-30 shadow-lg border-b-2 border-gray-200">
+                <TableRow className="bg-white hover:bg-white">
+                  <TableHead className="w-[25%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Area</TableHead>
+                  <TableHead className="w-[15%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">State</TableHead>
+                  <TableHead className="w-[15%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">City</TableHead>
+                  <TableHead className="w-[10%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Status</TableHead>
+                  <TableHead className="w-[20%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Created</TableHead>
+                  <TableHead className="w-[15%] bg-white border-b-0 px-4 py-3 text-right font-semibold text-gray-900">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {areasLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="p-0">
-                      <LoadingTable columns={6} rows={7} className="border-0" />
+              {areasLoading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="p-0">
+                    <LoadingTable columns={6} rows={7} className="border-0" />
+                  </TableCell>
+                </TableRow>
+              ) : areasError ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="p-0">
+                    <ErrorTable
+                      columns={6}
+                      message="Failed to load areas"
+                      description="There was an error loading the areas. Please try again."
+                      onRetry={() => dispatch(fetchAreas({ page: currentPage, search: debouncedSearchTerm, limit: 20 }))}
+                      className="border-0"
+                    />
+                  </TableCell>
+                </TableRow>
+              ) : areas.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="p-0">
+                    <EmptyTable
+                      columns={6}
+                      message={debouncedSearchTerm ? 'No areas found' : 'No areas yet'}
+                      description={debouncedSearchTerm ? 'No areas match your search criteria.' : 'Create your first area to get started.'}
+                      className="border-0"
+                    />
+                  </TableCell>
+                </TableRow>
+              ) : (
+                areas.map((area) => (
+                  <TableRow key={area._id}>
+                    <TableCell className="font-medium px-4 py-3">
+                      <div className="text-sm font-medium text-gray-900 truncate">
+                        {area.name}
+                      </div>
+                    </TableCell>
+
+                    <TableCell className="px-4 py-3">
+                      <span className="text-sm text-gray-900 truncate">{area.state}</span>
+                    </TableCell>
+
+                    <TableCell className="px-4 py-3">
+                      <span className="text-sm text-gray-900 truncate">{area.city}</span>
+                    </TableCell>
+
+                    <TableCell className="px-4 py-3">
+                      {getStatusBadge(area.isActive, area._id)}
+                    </TableCell>
+
+                    <TableCell className="px-4 py-3">
+                      <span className="text-sm text-gray-900 truncate">{formatDate(area.createdAt)}</span>
+                    </TableCell>
+
+                    <TableCell className="text-right px-4 py-3">
+                      <div className="flex items-center justify-end space-x-0.5">
+
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50"
+                          title="Edit area"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteArea(area._id)}
+                          className="h-7 w-7 p-0 text-red-600 hover:text-red-900 hover:bg-red-50"
+                          title="Delete area"
+                        >
+                          <Trash2 className="h-4   w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
-                ) : areasError ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="p-0">
-                      <ErrorTable
-                        columns={6}
-                        message="Failed to load areas"
-                        description="There was an error loading the areas. Please try again."
-                        onRetry={() => dispatch(fetchAreas({ page: currentPage, search: debouncedSearchTerm, limit: 20 }))}
-                        className="border-0"
-                      />
-                    </TableCell>
-                  </TableRow>
-                ) : areas.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="p-0">
-                      <EmptyTable
-                        columns={6}
-                        message={debouncedSearchTerm ? 'No areas found' : 'No areas yet'}
-                        description={debouncedSearchTerm ? 'No areas match your search criteria.' : 'Create your first area to get started.'}
-                        className="border-0"
-                      />
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  areas.map((area) => (
-                    <TableRow key={area._id}>
-                      <TableCell className="font-medium px-4 py-3">
-                        <div className="text-sm font-medium text-gray-900 truncate">
-                          {area.name}
-                        </div>
-                      </TableCell>
-
-                      <TableCell className="px-4 py-3">
-                        <span className="text-sm text-gray-900 truncate">{area.state}</span>
-                      </TableCell>
-
-                      <TableCell className="px-4 py-3">
-                        <span className="text-sm text-gray-900 truncate">{area.city}</span>
-                      </TableCell>
-
-                      <TableCell className="px-4 py-3">
-                        {getStatusBadge(area.isActive, area._id)}
-                      </TableCell>
-
-                      <TableCell className="px-4 py-3">
-                        <span className="text-sm text-gray-900 truncate">{formatDate(area.createdAt)}</span>
-                      </TableCell>
-
-                      <TableCell className="text-right px-4 py-3">
-                        <div className="flex items-center justify-end space-x-0.5">
-
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50"
-                            title="Edit area"
-                          >
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteArea(area._id)}
-                            className="h-7 w-7 p-0 text-red-600 hover:text-red-900 hover:bg-red-50"
-                            title="Delete area"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
+                ))
+              )}
+                          </TableBody>
             </Table>
           </div>
         </CardContent>
