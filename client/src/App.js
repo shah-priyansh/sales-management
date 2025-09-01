@@ -11,8 +11,9 @@ import Login from './components/Login';
 import Layout from './components/layout/Layout';
 import Dashboard from './components/Dashboard';
 import Clients from './components/Client';
-import Areas from './components/Area';
-import UserManagement from './components/User/UserManagement';
+import Area from './components/Area';
+import User from './components/User';
+import ComponentTest from './components/ComponentTest';
 
 const AppRoutes = () => {
   return (
@@ -41,7 +42,7 @@ const AppRoutes = () => {
           path="users"
           element={
             <ProtectedRoute allowedRoles={['admin']}>
-              <UserManagement />
+              <User />
             </ProtectedRoute>
           }
         />
@@ -56,8 +57,16 @@ const AppRoutes = () => {
         <Route
           path="areas"
           element={
-              <ProtectedRoute allowedRoles={['admin']}>
-              <Areas />
+            <ProtectedRoute allowedRoles={['admin']}>
+              <Area />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="test"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <ComponentTest />
             </ProtectedRoute>
           }
         />
