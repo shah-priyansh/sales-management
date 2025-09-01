@@ -1,9 +1,8 @@
-import React from 'react'
+import React from 'react';
+import AreaManagement from './Area/AreaManagement';
 
 const Area = () => {
-  return (
-    <div>Area</div>
-  )
-}
+  return <AreaManagement />;
+};
 
-export default Area
+export default Area;
