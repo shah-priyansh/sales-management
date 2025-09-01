@@ -22,7 +22,7 @@ const AreaManagement = () => {
     if (searchTerm !== debouncedSearchTerm) {
       setIsSearching(true);
     }
-    
+
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
       setIsSearching(false);
@@ -41,10 +41,10 @@ const AreaManagement = () => {
   }, [debouncedSearchTerm, searchTerm]);
 
   useEffect(() => {
-    dispatch(fetchAreas({ 
-      page: currentPage, 
+    dispatch(fetchAreas({
+      page: currentPage,
       search: debouncedSearchTerm,
-      limit: 20 
+      limit: 20
     }));
   }, [dispatch, currentPage, debouncedSearchTerm]);
 
@@ -164,108 +164,110 @@ const AreaManagement = () => {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardContent className="p-0 overflow-auto h-[440px]">
-          <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-            <Table className="w-full table-fixed">
-              <TableHeader className="sticky top-0">
-                <TableRow>
-                  <TableHead className="w-[25%]">Area</TableHead>
-                  <TableHead className="w-[15%]">State</TableHead>
-                  <TableHead className="w-[15%]">City</TableHead>
-                  <TableHead className="w-[10%]">Status</TableHead>
-                  <TableHead className="w-[20%]">Created</TableHead>
-                  <TableHead className="w-[15%] text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-            <TableBody>
-              {areasLoading ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="p-0">
-                    <LoadingTable columns={6} rows={7} className="border-0" />
-                  </TableCell>
-                </TableRow>
-              ) : areasError ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="p-0">
-                    <ErrorTable 
-                      columns={6} 
-                      message="Failed to load areas"
-                      description="There was an error loading the areas. Please try again."
-                      onRetry={() => dispatch(fetchAreas({ page: currentPage, search: debouncedSearchTerm, limit: 20 }))}
-                      className="border-0"
-                    />
-                  </TableCell>
-                </TableRow>
-              ) : areas.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="p-0">
-                    <EmptyTable 
-                      columns={6}
-                      message={debouncedSearchTerm ? 'No areas found' : 'No areas yet'}
-                      description={debouncedSearchTerm ? 'No areas match your search criteria.' : 'Create your first area to get started.'}
-                      className="border-0"
-                    />
-                  </TableCell>
-                </TableRow>
-              ) : (
-                areas.map((area) => (
-                <TableRow key={area._id}>
-                  <TableCell className="font-medium">
-                    <div className="text-sm font-medium text-gray-900 truncate">
-                      {area.name}
-                    </div>
-                  </TableCell>
+            <Card>
+        <CardContent className="p-0">
+          <Table className="w-full table-fixed border-collapse">
+            <TableHeader className="bg-white">
+              <TableRow>
+                <TableHead className="w-[25%] bg-white border-b">Area</TableHead>
+                <TableHead className="w-[15%] bg-white border-b">State</TableHead>
+                <TableHead className="w-[15%] bg-white border-b">City</TableHead>
+                <TableHead className="w-[10%] bg-white border-b">Status</TableHead>
+                <TableHead className="w-[20%] bg-white border-b">Created</TableHead>
+                <TableHead className="w-[15%] text-right bg-white border-b">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+          </Table>
+          <div className="overflow-auto h-[400px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+            <Table className="w-full table-fixed border-collapse">
+              <TableBody>
+                {areasLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="p-0">
+                      <LoadingTable columns={6} rows={7} className="border-0" />
+                    </TableCell>
+                  </TableRow>
+                ) : areasError ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="p-0">
+                      <ErrorTable
+                        columns={6}
+                        message="Failed to load areas"
+                        description="There was an error loading the areas. Please try again."
+                        onRetry={() => dispatch(fetchAreas({ page: currentPage, search: debouncedSearchTerm, limit: 20 }))}
+                        className="border-0"
+                      />
+                    </TableCell>
+                  </TableRow>
+                ) : areas.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="p-0">
+                      <EmptyTable
+                        columns={6}
+                        message={debouncedSearchTerm ? 'No areas found' : 'No areas yet'}
+                        description={debouncedSearchTerm ? 'No areas match your search criteria.' : 'Create your first area to get started.'}
+                        className="border-0"
+                      />
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  areas.map((area) => (
+                    <TableRow key={area._id}>
+                      <TableCell className="font-medium">
+                        <div className="text-sm font-medium text-gray-900 truncate">
+                          {area.name}
+                        </div>
+                      </TableCell>
 
-                  <TableCell>
-                    <span className="text-sm text-gray-900 truncate">{area.state}</span>
-                  </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-gray-900 truncate">{area.state}</span>
+                      </TableCell>
 
-                  <TableCell>
-                    <span className="text-sm text-gray-900 truncate">{area.city}</span>
-                  </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-gray-900 truncate">{area.city}</span>
+                      </TableCell>
 
-                  <TableCell>
-                    {getStatusBadge(area.isActive, area._id)}
-                  </TableCell>
+                      <TableCell>
+                        {getStatusBadge(area.isActive, area._id)}
+                      </TableCell>
 
-                  <TableCell>
-                    <span className="text-sm text-gray-900 truncate">{formatDate(area.createdAt)}</span>
-                  </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-gray-900 truncate">{formatDate(area.createdAt)}</span>
+                      </TableCell>
 
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end space-x-0.5">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0 text-blue-600 hover:text-blue-900 hover:bg-blue-50"
-                        title="View area"
-                      >
-                        <Eye className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50"
-                        title="Edit area"
-                      >
-                        <Edit className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteArea(area._id)}
-                        className="h-7 w-7 p-0 text-red-600 hover:text-red-900 hover:bg-red-50"
-                        title="Delete area"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-                ))
-              )}
-            </TableBody>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end space-x-0.5">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 text-blue-600 hover:text-blue-900 hover:bg-blue-50"
+                            title="View area"
+                          >
+                            <Eye className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50"
+                            title="Edit area"
+                          >
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteArea(area._id)}
+                            className="h-7 w-7 p-0 text-red-600 hover:text-red-900 hover:bg-red-50"
+                            title="Delete area"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
             </Table>
           </div>
         </CardContent>
