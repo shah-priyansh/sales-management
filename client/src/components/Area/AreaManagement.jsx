@@ -164,22 +164,20 @@ const AreaManagement = () => {
         </CardContent>
       </Card>
 
-            <Card>
+      <Card>
         <CardContent className="p-0">
-          <Table className="w-full table-fixed border-collapse">
-            <TableHeader className="bg-white">
-              <TableRow>
-                <TableHead className="w-[25%] bg-white border-b">Area</TableHead>
-                <TableHead className="w-[15%] bg-white border-b">State</TableHead>
-                <TableHead className="w-[15%] bg-white border-b">City</TableHead>
-                <TableHead className="w-[10%] bg-white border-b">Status</TableHead>
-                <TableHead className="w-[20%] bg-white border-b">Created</TableHead>
-                <TableHead className="w-[15%] text-right bg-white border-b">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-          </Table>
-          <div className="overflow-auto h-[400px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+          <div className="overflow-auto h-[440px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
             <Table className="w-full table-fixed border-collapse">
+              <TableHeader className="sticky top-0 bg-white z-10 shadow-sm">
+                <TableRow>
+                  <TableHead className="w-[25%] bg-white border-b px-4 py-3 text-left">Area</TableHead>
+                  <TableHead className="w-[15%] bg-white border-b px-4 py-3 text-left">State</TableHead>
+                  <TableHead className="w-[15%] bg-white border-b px-4 py-3 text-left">City</TableHead>
+                  <TableHead className="w-[10%] bg-white border-b px-4 py-3 text-left">Status</TableHead>
+                  <TableHead className="w-[20%] bg-white border-b px-4 py-3 text-left">Created</TableHead>
+                  <TableHead className="w-[15%] bg-white border-b px-4 py-3 text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
               <TableBody>
                 {areasLoading ? (
                   <TableRow>
@@ -213,38 +211,31 @@ const AreaManagement = () => {
                 ) : (
                   areas.map((area) => (
                     <TableRow key={area._id}>
-                      <TableCell className="font-medium">
+                      <TableCell className="font-medium px-4 py-3">
                         <div className="text-sm font-medium text-gray-900 truncate">
                           {area.name}
                         </div>
                       </TableCell>
 
-                      <TableCell>
+                      <TableCell className="px-4 py-3">
                         <span className="text-sm text-gray-900 truncate">{area.state}</span>
                       </TableCell>
 
-                      <TableCell>
+                      <TableCell className="px-4 py-3">
                         <span className="text-sm text-gray-900 truncate">{area.city}</span>
                       </TableCell>
 
-                      <TableCell>
+                      <TableCell className="px-4 py-3">
                         {getStatusBadge(area.isActive, area._id)}
                       </TableCell>
 
-                      <TableCell>
+                      <TableCell className="px-4 py-3">
                         <span className="text-sm text-gray-900 truncate">{formatDate(area.createdAt)}</span>
                       </TableCell>
 
-                      <TableCell className="text-right">
+                      <TableCell className="text-right px-4 py-3">
                         <div className="flex items-center justify-end space-x-0.5">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0 text-blue-600 hover:text-blue-900 hover:bg-blue-50"
-                            title="View area"
-                          >
-                            <Eye className="h-3 w-3" />
-                          </Button>
+
                           <Button
                             variant="ghost"
                             size="sm"
