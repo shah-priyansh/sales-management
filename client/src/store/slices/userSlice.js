@@ -2,12 +2,14 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
+const API_URL = process.env.REACT_APP_API_URL || '';
+
 // Async thunks
 export const fetchUsers = createAsyncThunk(
-  'user/fetchUsers',
-  async (params = {}, { rejectWithValue }) => {
+  'users/fetchUsers',
+  async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get('/api/admin/users', { params });
+      const response = await axios.get(`${API_URL}/api/users`);
       return response.data;
     } catch (error) {
       const message = error.response?.data?.message || 'Failed to fetch users';
@@ -17,11 +19,10 @@ export const fetchUsers = createAsyncThunk(
 );
 
 export const createUser = createAsyncThunk(
-  'user/createUser',
+  'users/createUser',
   async (userData, { rejectWithValue }) => {
     try {
-      const response = await axios.post('/api/admin/users', userData);
-      toast.success('User created successfully');
+      const response = await axios.post(`${API_URL}/api/users`, userData);
       return response.data;
     } catch (error) {
       const message = error.response?.data?.message || 'Failed to create user';
@@ -31,11 +32,10 @@ export const createUser = createAsyncThunk(
 );
 
 export const updateUser = createAsyncThunk(
-  'user/updateUser',
+  'users/updateUser',
   async ({ id, userData }, { rejectWithValue }) => {
     try {
-      const response = await axios.put(`/api/admin/users/${id}`, userData);
-      toast.success('User updated successfully');
+      const response = await axios.put(`${API_URL}/api/users/${id}`, userData);
       return response.data;
     } catch (error) {
       const message = error.response?.data?.message || 'Failed to update user';
@@ -45,14 +45,39 @@ export const updateUser = createAsyncThunk(
 );
 
 export const deleteUser = createAsyncThunk(
-  'user/deleteUser',
+  'users/deleteUser',
   async (id, { rejectWithValue }) => {
     try {
-      await axios.delete(`/api/admin/users/${id}`);
-      toast.success('User deactivated successfully');
+      await axios.delete(`${API_URL}/api/users/${id}`);
       return id;
     } catch (error) {
-      const message = error.response?.data?.message || 'Failed to deactivate user';
+      const message = error.response?.data?.message || 'Failed to delete user';
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const toggleUserStatus = createAsyncThunk(
+  'users/toggleUserStatus',
+  async ({ id, isActive }, { rejectWithValue }) => {
+    try {
+      const response = await axios.patch(`${API_URL}/api/users/${id}/status`, { isActive });
+      return response.data;
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to update user status';
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const resetUserPassword = createAsyncThunk(
+  'users/resetUserPassword',
+  async ({ id, newPassword }, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`${API_URL}/api/users/${id}/reset-password`, { newPassword });
+      return response.data;
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to reset password';
       return rejectWithValue(message);
     }
   }
@@ -60,27 +85,47 @@ export const deleteUser = createAsyncThunk(
 
 const initialState = {
   users: [],
-  totalUsers: 0,
-  currentPage: 1,
-  totalPages: 1,
   loading: false,
   error: null,
-  currentUser: null,
+  selectedUser: null,
+  filters: {
+    role: 'all',
+    status: 'all',
+    search: ''
+  },
+  pagination: {
+    page: 1,
+    limit: 10,
+    total: 0
+  }
 };
 
 const userSlice = createSlice({
-  name: 'user',
+  name: 'users',
   initialState,
   reducers: {
     clearError: (state) => {
       state.error = null;
     },
-    setCurrentUser: (state, action) => {
-      state.currentUser = action.payload;
+    setSelectedUser: (state, action) => {
+      state.selectedUser = action.payload;
     },
-    clearCurrentUser: (state) => {
-      state.currentUser = null;
+    clearSelectedUser: (state) => {
+      state.selectedUser = null;
     },
+    setFilters: (state, action) => {
+      state.filters = { ...state.filters, ...action.payload };
+    },
+    clearFilters: (state) => {
+      state.filters = {
+        role: 'all',
+        status: 'all',
+        search: ''
+      };
+    },
+    setPagination: (state, action) => {
+      state.pagination = { ...state.pagination, ...action.payload };
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -91,10 +136,7 @@ const userSlice = createSlice({
       })
       .addCase(fetchUsers.fulfilled, (state, action) => {
         state.loading = false;
-        state.users = action.payload.users;
-        state.totalUsers = action.payload.total;
-        state.currentPage = action.payload.currentPage;
-        state.totalPages = action.payload.totalPages;
+        state.users = action.payload;
         state.error = null;
       })
       .addCase(fetchUsers.rejected, (state, action) => {
@@ -102,7 +144,7 @@ const userSlice = createSlice({
         state.error = action.payload;
         toast.error(action.payload);
       })
-      
+
       // Create user
       .addCase(createUser.pending, (state) => {
         state.loading = true;
@@ -110,16 +152,16 @@ const userSlice = createSlice({
       })
       .addCase(createUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.users.unshift(action.payload);
-        state.totalUsers += 1;
+        state.users.push(action.payload);
         state.error = null;
+        toast.success('User created successfully!');
       })
       .addCase(createUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
         toast.error(action.payload);
       })
-      
+
       // Update user
       .addCase(updateUser.pending, (state) => {
         state.loading = true;
@@ -132,13 +174,14 @@ const userSlice = createSlice({
           state.users[index] = action.payload;
         }
         state.error = null;
+        toast.success('User updated successfully!');
       })
       .addCase(updateUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
         toast.error(action.payload);
       })
-      
+
       // Delete user
       .addCase(deleteUser.pending, (state) => {
         state.loading = true;
@@ -146,13 +189,47 @@ const userSlice = createSlice({
       })
       .addCase(deleteUser.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.users.findIndex(user => user._id === action.payload);
-        if (index !== -1) {
-          state.users[index].isActive = false;
-        }
+        state.users = state.users.filter(user => user._id !== action.payload);
         state.error = null;
+        toast.success('User deleted successfully!');
       })
       .addCase(deleteUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        toast.error(action.payload);
+      })
+
+      // Toggle user status
+      .addCase(toggleUserStatus.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(toggleUserStatus.fulfilled, (state, action) => {
+        state.loading = false;
+        const index = state.users.findIndex(user => user._id === action.payload._id);
+        if (index !== -1) {
+          state.users[index] = action.payload;
+        }
+        state.error = null;
+        toast.success('User status updated successfully!');
+      })
+      .addCase(toggleUserStatus.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        toast.error(action.payload);
+      })
+
+      // Reset user password
+      .addCase(resetUserPassword.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(resetUserPassword.fulfilled, (state, action) => {
+        state.loading = false;
+        state.error = null;
+        toast.success('Password reset successfully!');
+      })
+      .addCase(resetUserPassword.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
         toast.error(action.payload);
@@ -160,15 +237,39 @@ const userSlice = createSlice({
   },
 });
 
-export const { clearError, setCurrentUser, clearCurrentUser } = userSlice.actions;
+export const { 
+  clearError, 
+  setSelectedUser, 
+  clearSelectedUser, 
+  setFilters, 
+  clearFilters, 
+  setPagination 
+} = userSlice.actions;
 
 // Selectors
-export const selectUsers = (state) => state.user.users;
-export const selectUserLoading = (state) => state.user.loading;
-export const selectUserError = (state) => state.user.error;
-export const selectTotalUsers = (state) => state.user.totalUsers;
-export const selectCurrentPage = (state) => state.user.currentPage;
-export const selectTotalPages = (state) => state.user.totalPages;
-export const selectCurrentUser = (state) => state.user.currentUser;
+export const selectUsers = (state) => state?.users?.users || [];
+export const selectUsersLoading = (state) => state?.users?.loading;
+export const selectUsersError = (state) => state.users?.error;
+export const selectSelectedUser = (state) => state?.users?.selectedUser;
+export const selectUserFilters = (state) => state?.users?.filters;
+export const selectUserPagination = (state) => state?.users?.pagination;
+
+// Filtered users selector
+export const selectFilteredUsers = (state) => {
+  const { users, filters } = state?.users || [];
+  
+  return (users || [])?.filter(user => {
+    const matchesSearch = 
+      user.firstName?.toLowerCase().includes(filters.search.toLowerCase()) ||
+      user.lastName?.toLowerCase().includes(filters.search.toLowerCase()) ||
+      user.email?.toLowerCase().includes(filters.search.toLowerCase()) ||
+      user.phone?.includes(filters.search);
+    
+    const matchesRole = filters.role === 'all' || user.role === filters.role;
+    const matchesStatus = filters.status === 'all' || user.isActive === (filters.status === 'active');
+    
+    return matchesSearch && matchesRole && matchesStatus;
+  });
+};
 
 export default userSlice.reducer;

@@ -1,11 +1,15 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Menu, X, User, LogOut, Settings } from 'lucide-react';
+import { logoutUser } from '../../store/slices/authSlice';
+import { useDispatch } from 'react-redux';
 
 const Header = ({ user, onMenuClick }) => {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const { logout } = useAuth();
   const userMenuRef = useRef(null);
+  const dispatch = useDispatch();
+  const logout = useCallback(() => {
+    dispatch(logoutUser());
+  }, [dispatch]);
 
   // Close user menu when clicking outside
   useEffect(() => {

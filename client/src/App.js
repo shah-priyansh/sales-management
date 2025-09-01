@@ -10,9 +10,9 @@ import {
 import Login from './components/Login';
 import Layout from './components/layout/Layout';
 import Dashboard from './components/Dashboard';
-import Users from './components/User';
 import Clients from './components/Client';
 import Areas from './components/Area';
+import UserManagement from './components/User/UserManagement';
 
 const AppRoutes = () => {
   return (
@@ -41,7 +41,7 @@ const AppRoutes = () => {
           path="users"
           element={
             <ProtectedRoute allowedRoles={['admin']}>
-              <Users />
+              <UserManagement />
             </ProtectedRoute>
           }
         />
