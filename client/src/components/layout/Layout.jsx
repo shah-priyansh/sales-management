@@ -16,7 +16,7 @@ const Layout = () => {
       <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
       
       {/* Main content */}
-      <div className="flex-1 overflow-auto focus:outline-none">
+      <div className="flex-1  focus:outline-none">
         {/* Header */}
         <Header 
           user={user} 
