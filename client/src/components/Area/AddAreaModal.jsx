@@ -18,7 +18,7 @@ import {
 } from '../../store/slices/stateSlice';
 import { Button, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui';
 
-const AddAreaModal = ({ isOpen, onClose, onSuccess, area = null }) => {  
+const AddAreaModal = ({ isOpen, onClose, area = null }) => {  
   const dispatch = useDispatch();
   const [selectedState, setSelectedState] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
@@ -66,20 +66,20 @@ const AddAreaModal = ({ isOpen, onClose, onSuccess, area = null }) => {
       }
       
       // Set the city name for display (will be updated when cities load)
-      setSelectedCity(area.city || '');
+      setSelectedCity('');
     }
   }, [isOpen, area, setValue, states, dispatch]);
 
   // Set city ID when cities are loaded in edit mode
   useEffect(() => {
-    if (isOpen && area && cities.length > 0 && selectedCity && !watch('city')) {
+    if (isOpen && area && cities.length > 0 && !selectedCity) {
       const cityData = cities.find(city => city.name === area.city);
       if (cityData) {
         setValue('city', cityData._id);
         setSelectedCity(cityData._id);
       }
     }
-  }, [isOpen, area, cities, selectedCity, setValue, watch]);
+  }, [isOpen, area, cities, selectedCity, setValue]);
 
   // Fetch states on component mount
   useEffect(() => {
@@ -265,6 +265,7 @@ const AddAreaModal = ({ isOpen, onClose, onSuccess, area = null }) => {
                 <Select
                   value={selectedCity}
                   onValueChange={(value) => {
+                    setSelectedCity(value);
                     setValue('city', value, { shouldValidate: true });
                   }}
                   disabled={citiesLoading || (!selectedState && !isGujarat)}
