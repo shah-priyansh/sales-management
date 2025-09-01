@@ -43,6 +43,15 @@ export const toggleAreaStatusFetch = createAsyncThunk('areas/toggleAreaStatusFet
   }
 });
 
+export const updateAreaFetch = createAsyncThunk('areas/updateAreaFetch', async ({ id, data }) => {
+  try {
+    const response = await axios.put(`${API_URL}/areas/${id}`, data);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data?.message || 'Failed to update area';
+  }
+});
+
 const initialState = {
   areas: [],
   pagination: {
@@ -143,6 +152,22 @@ const areaSlice = createSlice({
         }
       })
       .addCase(toggleAreaStatusFetch.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
+      })
+      // Update area fetch
+      .addCase(updateAreaFetch.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateAreaFetch.fulfilled, (state, action) => {
+        state.loading = false;
+        const index = state.areas.findIndex(area => area._id === action.payload.data._id);
+        if (index !== -1) {
+          state.areas[index] = action.payload.data;
+        }
+      })
+      .addCase(updateAreaFetch.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message;
       });

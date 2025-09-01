@@ -2,7 +2,7 @@ import { MapPin } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useDispatch, useSelector } from 'react-redux';
-import { addAreaFetch } from '../../store/slices/areaSlice';
+import { addAreaFetch, updateAreaFetch } from '../../store/slices/areaSlice';
 import {
   clearCitiesByState,
   fetchCitiesByState,
@@ -18,7 +18,7 @@ import {
 } from '../../store/slices/stateSlice';
 import { Button, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui';
 
-const AddAreaModal = ({ isOpen, onClose, onSuccess }) => {  
+const AddAreaModal = ({ isOpen, onClose, onSuccess, area = null }) => {  
   const dispatch = useDispatch();
   const [selectedState, setSelectedState] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
@@ -30,7 +30,13 @@ const AddAreaModal = ({ isOpen, onClose, onSuccess }) => {
     reset,
     setValue,
     watch
-  } = useForm();
+  } = useForm({
+    defaultValues: {
+      name: '',
+      state: '',
+      city: '',
+    }
+  });
 
   // Redux selectors
   const states = useSelector(selectStates);
@@ -43,6 +49,37 @@ const AddAreaModal = ({ isOpen, onClose, onSuccess }) => {
   // Watch form values
   const watchedState = watch('state');
   const watchedCity = watch('city');
+
+  // Initialize form with area data when editing
+  useEffect(() => {
+    if (isOpen && area && states.length > 0) {
+      setValue('name', area.name || '');
+      
+      // Find the state by name and set the state ID
+      const stateData = states.find(state => state.name === area.state);
+      if (stateData) {
+        setValue('state', stateData._id);
+        setSelectedState(stateData._id);
+        
+        // Fetch cities for this state
+        dispatch(fetchCitiesByState(stateData._id));
+      }
+      
+      // Set the city name for display (will be updated when cities load)
+      setSelectedCity(area.city || '');
+    }
+  }, [isOpen, area, setValue, states, dispatch]);
+
+  // Set city ID when cities are loaded in edit mode
+  useEffect(() => {
+    if (isOpen && area && cities.length > 0 && selectedCity && !watch('city')) {
+      const cityData = cities.find(city => city.name === area.city);
+      if (cityData) {
+        setValue('city', cityData._id);
+        setSelectedCity(cityData._id);
+      }
+    }
+  }, [isOpen, area, cities, selectedCity, setValue, watch]);
 
   // Fetch states on component mount
   useEffect(() => {
@@ -113,23 +150,27 @@ const AddAreaModal = ({ isOpen, onClose, onSuccess }) => {
 
     
     try {
-      // Call the API to create the area
-      const result = await dispatch(addAreaFetch(formData));
-      console.log('API call result:', result);
+      let result;
       
-      if (addAreaFetch.fulfilled.match(result)) {
+      if (area) {
+        // Edit mode - update existing area
+        result = await dispatch(updateAreaFetch({ id: area._id, data: formData }));
+      } else {
+        // Add mode - create new area
+        result = await dispatch(addAreaFetch(formData));
+      }
+      
+      if ((area ? updateAreaFetch : addAreaFetch).fulfilled.match(result)) {
         // API call successful
-        console.log('Area created successfully:', result.payload);
         reset();
         setSelectedState('');
         setSelectedCity('');
         onClose(); // Close the modal
       } else {
         // API call failed
-        console.error('Failed to create area:', result.error);
       }
     } catch (error) {
-      console.error('Error creating area:', error);
+      console.error(`Error ${area ? 'updating' : 'creating'} area:`, error);
     }
   };
 
@@ -161,9 +202,9 @@ const AddAreaModal = ({ isOpen, onClose, onSuccess }) => {
               <MapPin className="h-5 w-5 text-white" />
             </div>
             <div>
-              <DialogTitle>Add New Area</DialogTitle>
+              <DialogTitle>{area ? 'Edit Area' : 'Add New Area'}</DialogTitle>
               <DialogDescription>
-                Create a new sales territory for your business
+                {area ? 'Update the area information' : 'Create a new sales territory for your business'}
               </DialogDescription>
             </div>
           </div>
@@ -324,7 +365,7 @@ const AddAreaModal = ({ isOpen, onClose, onSuccess }) => {
               type="submit"
               variant="gradient"
             >
-              Create Area
+              {area ? 'Update Area' : 'Create Area'}
             </Button>
           </DialogFooter>
         </form>

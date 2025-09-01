@@ -1,13 +1,15 @@
-import { Building2, Edit, Eye, MapPin, Plus, Trash2 } from 'lucide-react';
+import { Building2, Edit, MapPin, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { deleteArea, fetchAreas, selectAreas, selectAreasError, selectAreasLoading, selectAreasPagination, toggleAreaStatus } from '../../store/slices/areaSlice';
 import { formatDate } from '../../utils/authUtils';
-import { Badge, Button, Card, CardContent, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Pagination, LoadingTable, EmptyTable, ErrorTable, SearchInput } from '../ui';
+import { Badge, Button, Card, CardContent, EmptyTable, ErrorTable, LoadingTable, Pagination, SearchInput, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui';
 import AddAreaModal from './AddAreaModal';
 
 const AreaManagement = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedArea, setSelectedArea] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -53,6 +55,16 @@ const AreaManagement = () => {
     setIsAddModalOpen(false);
   };
 
+  const handleEditArea = (area) => {
+    setSelectedArea(area);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditModalClose = () => {
+    setIsEditModalOpen(false);
+    setSelectedArea(null);
+  };
+
   const handleClearSearch = () => {
     setSearchTerm('');
     setDebouncedSearchTerm('');
@@ -72,7 +84,7 @@ const AreaManagement = () => {
   const getStatusBadge = (isActive, areaId) => {
     return (
       <Badge
-        variant={isActive ? "success" : "secondary"}
+        variant={isActive ? "success" : "destructive"}
         className="cursor-pointer hover:opacity-80"
         onClick={() => handleToggleStatus(areaId)}
       >
@@ -179,86 +191,87 @@ const AreaManagement = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-              {areasLoading ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="p-0">
-                    <LoadingTable columns={6} rows={7} className="border-0" />
-                  </TableCell>
-                </TableRow>
-              ) : areasError ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="p-0">
-                    <ErrorTable
-                      columns={6}
-                      message="Failed to load areas"
-                      description="There was an error loading the areas. Please try again."
-                      onRetry={() => dispatch(fetchAreas({ page: currentPage, search: debouncedSearchTerm, limit: 20 }))}
-                      className="border-0"
-                    />
-                  </TableCell>
-                </TableRow>
-              ) : areas.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="p-0">
-                    <EmptyTable
-                      columns={6}
-                      message={debouncedSearchTerm ? 'No areas found' : 'No areas yet'}
-                      description={debouncedSearchTerm ? 'No areas match your search criteria.' : 'Create your first area to get started.'}
-                      className="border-0"
-                    />
-                  </TableCell>
-                </TableRow>
-              ) : (
-                areas.map((area) => (
-                  <TableRow key={area._id}>
-                    <TableCell className="font-medium px-4 py-3">
-                      <div className="text-sm font-medium text-gray-900 truncate">
-                        {area.name}
-                      </div>
-                    </TableCell>
-
-                    <TableCell className="px-4 py-3">
-                      <span className="text-sm text-gray-900 truncate">{area.state}</span>
-                    </TableCell>
-
-                    <TableCell className="px-4 py-3">
-                      <span className="text-sm text-gray-900 truncate">{area.city}</span>
-                    </TableCell>
-
-                    <TableCell className="px-4 py-3">
-                      {getStatusBadge(area.isActive, area._id)}
-                    </TableCell>
-
-                    <TableCell className="px-4 py-3">
-                      <span className="text-sm text-gray-900 truncate">{formatDate(area.createdAt)}</span>
-                    </TableCell>
-
-                    <TableCell className="text-right px-4 py-3">
-                      <div className="flex items-center justify-end space-x-0.5">
-
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 w-7 p-0 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50"
-                          title="Edit area"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteArea(area._id)}
-                          className="h-7 w-7 p-0 text-red-600 hover:text-red-900 hover:bg-red-50"
-                          title="Delete area"
-                        >
-                          <Trash2 className="h-4   w-4" />
-                        </Button>
-                      </div>
+                {areasLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="p-0">
+                      <LoadingTable columns={6} rows={7} className="border-0" />
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-                          </TableBody>
+                ) : areasError ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="p-0">
+                      <ErrorTable
+                        columns={6}
+                        message="Failed to load areas"
+                        description="There was an error loading the areas. Please try again."
+                        onRetry={() => dispatch(fetchAreas({ page: currentPage, search: debouncedSearchTerm, limit: 20 }))}
+                        className="border-0"
+                      />
+                    </TableCell>
+                  </TableRow>
+                ) : areas.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="p-0">
+                      <EmptyTable
+                        columns={6}
+                        message={debouncedSearchTerm ? 'No areas found' : 'No areas yet'}
+                        description={debouncedSearchTerm ? 'No areas match your search criteria.' : 'Create your first area to get started.'}
+                        className="border-0"
+                      />
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  areas.map((area) => (
+                    <TableRow key={area._id}>
+                      <TableCell className="font-medium px-4 py-3">
+                        <div className="text-sm font-medium text-gray-900 truncate">
+                          {area.name}
+                        </div>
+                      </TableCell>
+
+                      <TableCell className="px-4 py-3">
+                        <span className="text-sm text-gray-900 truncate">{area.state}</span>
+                      </TableCell>
+
+                      <TableCell className="px-4 py-3">
+                        <span className="text-sm text-gray-900 truncate">{area.city}</span>
+                      </TableCell>
+
+                      <TableCell className="px-4 py-3">
+                        {getStatusBadge(area.isActive, area._id)}
+                      </TableCell>
+
+                      <TableCell className="px-4 py-3">
+                        <span className="text-sm text-gray-900 truncate">{formatDate(area.createdAt)}</span>
+                      </TableCell>
+
+                      <TableCell className="text-right px-4 py-3">
+                        <div className="flex items-center justify-end space-x-0.5">
+
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditArea(area)}
+                            className="h-7 w-7 p-0 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50"
+                            title="Edit area"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteArea(area._id)}
+                            className="h-7 w-7 p-0 text-red-600 hover:text-red-900 hover:bg-red-50"
+                            title="Delete area"
+                          >
+                            <Trash2 className="h-4   w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
             </Table>
           </div>
         </CardContent>
@@ -283,6 +296,13 @@ const AreaManagement = () => {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSuccess={handleAddAreaSuccess}
+      />
+
+      <AddAreaModal
+        isOpen={isEditModalOpen}
+        onClose={handleEditModalClose}
+        onSuccess={handleAddAreaSuccess}
+        area={selectedArea}
       />
     </div>
   );

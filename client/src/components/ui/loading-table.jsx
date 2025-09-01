@@ -1,6 +1,4 @@
-import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './table';
-import { cn } from '../../lib/utils';
 
 const LoadingTable = ({ 
   columns = 5, 
@@ -137,4 +135,5 @@ const ErrorTable = ({
   );
 };
 
-export { LoadingTable, EmptyTable, ErrorTable };
+export { EmptyTable, ErrorTable, LoadingTable };
+
