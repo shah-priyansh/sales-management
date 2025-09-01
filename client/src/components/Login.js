@@ -12,6 +12,7 @@ const Login = () => {
   const navigate = useNavigate();
   const loading = useSelector(selectAuthLoading);
   const error = useSelector(selectAuthError);
+  console.log(error);
 
   const {
     register,

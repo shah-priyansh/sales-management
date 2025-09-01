@@ -11,7 +11,7 @@ export const loginUser = createAsyncThunk(
       const { token, user } = response.data;
 
       // Store token in localStorage
-      localStorage.setItem('token', token);
+      localStorage.setItem('sales-management-token', token);
 
       // Set default auth header
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -29,7 +29,7 @@ export const logoutUser = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       // Remove token from localStorage
-      localStorage.removeItem('token');
+      localStorage.removeItem('sales-management-token');
 
       // Remove auth header
       delete axios.defaults.headers.common['Authorization'];
@@ -45,9 +45,10 @@ export const checkAuthStatus = createAsyncThunk(
   'auth/checkAuthStatus',
   async (_, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('sales-management-token');
       if (!token) {
-        throw new Error('No token found');
+        // No token found - user is not logged in, this is not an error
+        return rejectWithValue('NO_TOKEN');
       }
 
       // Set auth header
@@ -56,10 +57,30 @@ export const checkAuthStatus = createAsyncThunk(
       const response = await axios.get(`${API_URL}/auth/me`);
       return response.data;
     } catch (error) {
-      // Remove invalid token
-      localStorage.removeItem('token');
-      delete axios.defaults.headers.common['Authorization'];
-      return rejectWithValue('Authentication failed');
+      // Check if it's a network error or server error
+      if (error.response) {
+        // Server responded with error status
+        if (error.response.status === 401) {
+          // Unauthorized - token is invalid
+          localStorage.removeItem('sales-management-token');
+          delete axios.defaults.headers.common['Authorization'];
+          return rejectWithValue('INVALID_TOKEN');
+        } else if (error.response.status >= 500) {
+          // Server error
+          return rejectWithValue('SERVER_ERROR');
+        } else {
+          // Other client errors
+          return rejectWithValue('AUTH_ERROR');
+        }
+      } else if (error.request) {
+        // Network error
+        return rejectWithValue('NETWORK_ERROR');
+      } else {
+        // Other errors
+        localStorage.removeItem('sales-management-token');
+        delete axios.defaults.headers.common['Authorization'];
+        return rejectWithValue('UNKNOWN_ERROR');
+      }
     }
   }
 );
@@ -79,7 +100,7 @@ export const changePassword = createAsyncThunk(
 
 const initialState = {
   user: null,
-  token: localStorage.getItem('token'),
+  token: localStorage.getItem('sales-management-token'),
   isAuthenticated: false,
   loading: false,
   error: null,
@@ -145,7 +166,29 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.user = null;
         state.token = null;
-        state.error = action.payload;
+        
+        // Only show error messages for actual errors, not for normal cases
+        const errorType = action.payload;
+        if (errorType === 'NO_TOKEN') {
+          // No token - user is not logged in, this is normal
+          state.error = null;
+        } else if (errorType === 'INVALID_TOKEN') {
+          // Invalid token - show error
+          state.error = 'Session expired. Please login again.';
+          toast.error('Session expired. Please login again.');
+        } else if (errorType === 'SERVER_ERROR') {
+          // Server error
+          state.error = 'Server error. Please try again later.';
+          toast.error('Server error. Please try again later.');
+        } else if (errorType === 'NETWORK_ERROR') {
+          // Network error
+          state.error = 'Network error. Please check your connection.';
+          toast.error('Network error. Please check your connection.');
+        } else {
+          // Other errors
+          state.error = 'Authentication failed. Please login again.';
+          toast.error('Authentication failed. Please login again.');
+        }
       })
 
       // Change password

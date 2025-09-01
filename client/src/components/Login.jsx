@@ -1,14 +1,20 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Eye, EyeOff, User, Lock } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { useDispatch, useSelector } from 'react-redux';
+import { loginUser, selectAuthLoading, selectAuthError } from '../store/slices/authSlice';
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
+  const loading = useSelector(selectAuthLoading);
+  const error = useSelector(selectAuthError);
+
+  // Get the intended destination from location state or default to dashboard
+  const from = location.state?.from?.pathname || '/dashboard';
 
   const {
     register,
@@ -17,12 +23,11 @@ const Login = () => {
   } = useForm();
 
   const onSubmit = async (data) => {
-    setIsLoading(true);
-    const result = await login(data);
-    if (result.success) {
-      navigate('/dashboard');
+    const result = await dispatch(loginUser(data));
+    if (result.meta.requestStatus === 'fulfilled') {
+      // Redirect to the intended destination or dashboard
+      navigate(from, { replace: true });
     }
-    setIsLoading(false);
   };
 
   return (
@@ -35,7 +40,6 @@ const Login = () => {
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Sales Management System
           </h2>
-
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
@@ -90,13 +94,19 @@ const Login = () => {
             </div>
           </div>
 
+          {error && (
+            <div className="text-red-600 text-sm text-center bg-red-50 p-3 rounded-lg">
+              {error}
+            </div>
+          )}
+
           <div>
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={loading}
               className="btn-primary w-full flex justify-center items-center"
             >
-              {isLoading ? (
+              {loading ? (
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
               ) : (
                 'Sign In'
