@@ -2,7 +2,7 @@ import { Calendar, Edit, Eye, Plus, Search, Trash2, User } from 'lucide-react';
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { addUser, deleteUser, selectUsers, toggleUserStatus } from '../../store/slices/userSlice';
-import { Badge, Button, Card, CardContent, Input } from '../ui';
+import { Badge, Button, Card, CardContent, Input, Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '../ui';
 import AddUserModal from './AddUserModal';
 
 const UserManagement = () => {
@@ -45,7 +45,7 @@ const UserManagement = () => {
       manager: 'warning',
       salesman: 'default'
     };
-    
+
     return (
       <Badge variant={variants[role] || 'secondary'}>
         {role.charAt(0).toUpperCase() + role.slice(1)}
@@ -55,7 +55,7 @@ const UserManagement = () => {
 
   const getStatusBadge = (isActive, userId) => {
     return (
-      <Badge 
+      <Badge
         variant={isActive ? "success" : "secondary"}
         className="cursor-pointer hover:opacity-80"
         onClick={() => handleToggleStatus(userId)}
@@ -153,34 +153,34 @@ const UserManagement = () => {
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     User
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  </TableHead>
+                  <TableHead className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Role
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  </TableHead>
+                  <TableHead className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Contact
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  </TableHead>
+                  <TableHead className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  </TableHead>
+                  <TableHead className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Created
-                  </th>
-                  <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  </TableHead>
+                  <TableHead className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {filteredUsers.map((user) => (
-                  <tr key={user._id} className="hover:bg-gray-50 transition-colors">
+                  <TableRow key={user._id}>
                     {/* User Info */}
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <TableCell className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
                           <span className="text-sm font-medium text-white">
@@ -196,36 +196,36 @@ const UserManagement = () => {
                           </div>
                         </div>
                       </div>
-                    </td>
+                    </TableCell>
 
                     {/* Role */}
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <TableCell className="px-6 py-4 whitespace-nowrap">
                       {getRoleBadge(user.role)}
-                    </td>
+                    </TableCell>
 
                     {/* Contact */}
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <TableCell className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{user.email}</div>
                       {user.phone && (
                         <div className="text-sm text-gray-500">{user.phone}</div>
                       )}
-                    </td>
+                    </TableCell>
 
                     {/* Status */}
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <TableCell className="px-6 py-4 whitespace-nowrap">
                       {getStatusBadge(user.isActive, user._id)}
-                    </td>
+                    </TableCell>
 
                     {/* Created Date */}
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <div className="flex items-center">
                         <Calendar className="h-4 w-4 mr-2 text-gray-400" />
                         {user.createdAt}
                       </div>
-                    </td>
+                    </TableCell>
 
                     {/* Actions */}
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <TableCell className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end space-x-2">
                         <Button
                           variant="ghost"
@@ -253,11 +253,11 @@ const UserManagement = () => {
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
 
           {/* Empty State */}

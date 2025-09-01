@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Plus, Search, Edit, Trash2, Eye, MapPin, Building2, Calendar } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { addArea, deleteArea, toggleAreaStatus, selectAreas } from '../../store/slices/areaSlice';
-import { Button, Input, Card, CardContent, Badge } from '../ui';
+import { Button, Input, Card, CardContent, Badge, Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '../ui';
 import AddAreaModal from './AddAreaModal';
 
 const AreaManagement = () => {
@@ -41,7 +41,7 @@ const AreaManagement = () => {
 
   const getStatusBadge = (isActive, areaId) => {
     return (
-      <Badge 
+      <Badge
         variant={isActive ? "success" : "secondary"}
         className="cursor-pointer hover:opacity-80"
         onClick={() => handleToggleStatus(areaId)}
@@ -53,11 +53,6 @@ const AreaManagement = () => {
 
   return (
     <div className="p-6 min-h-screen">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Area Management</h1>
-        <p className="text-gray-600">Manage your sales territories and coverage areas</p>
-      </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -138,113 +133,99 @@ const AreaManagement = () => {
       {/* Areas Table */}
       <Card>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Area
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    City
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Description
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Created
-                  </th>
-                  <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredAreas.map((area) => (
-                  <tr key={area._id} className="hover:bg-gray-50 transition-colors">
-                    {/* Area Info */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
-                          <MapPin className="h-5 w-5 text-white" />
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[200px]">Area</TableHead>
+                <TableHead>City</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Created</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredAreas.map((area) => (
+                <TableRow key={area._id}>
+                  {/* Area Info */}
+                  <TableCell className="font-medium">
+                    <div className="flex items-center">
+                      <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                        <MapPin className="h-5 w-5 text-white" />
+                      </div>
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-gray-900">
+                          {area.name}
                         </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
-                            {area.name}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            ID: {area._id.slice(-4)}
-                          </div>
+                        <div className="text-sm text-gray-500">
+                          ID: {area._id.slice(-4)}
                         </div>
                       </div>
-                    </td>
+                    </div>
+                  </TableCell>
 
-                    {/* City */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <Building2 className="h-4 w-4 text-gray-400 mr-2" />
-                        <span className="text-sm text-gray-900">{area.city}</span>
-                      </div>
-                    </td>
+                  {/* City */}
+                  <TableCell>
+                    <div className="flex items-center">
+                      <Building2 className="h-4 w-4 text-gray-400 mr-2" />
+                      <span className="text-sm text-gray-900">{area.city}</span>
+                    </div>
+                  </TableCell>
 
-                    {/* Description */}
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900 max-w-xs truncate">
-                        {area.description || 'No description'}
-                      </div>
-                    </td>
+                  {/* Description */}
+                  <TableCell>
+                    <div className="text-sm text-gray-900 max-w-xs truncate">
+                      {area.description || 'No description'}
+                    </div>
+                  </TableCell>
 
-                                         {/* Status */}
-                     <td className="px-6 py-4 whitespace-nowrap">
-                       {getStatusBadge(area.isActive, area._id)}
-                     </td>
+                  {/* Status */}
+                  <TableCell>
+                    {getStatusBadge(area.isActive, area._id)}
+                  </TableCell>
 
-                    {/* Created Date */}
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <div className="flex items-center">
-                        <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                        {area.createdAt}
-                      </div>
-                    </td>
+                  {/* Created Date */}
+                  <TableCell>
+                    <div className="flex items-center">
+                      <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                      {area.createdAt}
+                    </div>
+                  </TableCell>
 
-                    {/* Actions */}
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex items-center justify-end space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-blue-600 hover:text-blue-900 hover:bg-blue-50"
-                          title="View area"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50"
-                          title="Edit area"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeleteArea(area._id)}
-                          className="text-red-600 hover:text-red-900 hover:bg-red-50"
-                          title="Delete area"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                  {/* Actions */}
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end space-x-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-blue-600 hover:text-blue-900 hover:bg-blue-50"
+                        title="View area"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50"
+                        title="Edit area"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeleteArea(area._id)}
+                        className="text-red-600 hover:text-red-900 hover:bg-red-50"
+                        title="Delete area"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
 
           {/* Empty State */}
           {filteredAreas.length === 0 && (
