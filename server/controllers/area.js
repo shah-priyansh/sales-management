@@ -3,7 +3,7 @@ const Area = require('../models/Area');
 
 const createArea = async (req, res) => {
   try {
-    const { name, description, city, isActive = true } = req.body;
+    const { name, description, city, state, stateId, cityId, isActive = true } = req.body;
 
     // Check if area already exists with same name
     const existingArea = await Area.findOne({
@@ -21,6 +21,9 @@ const createArea = async (req, res) => {
       name,
       description,
       city,
+      state,
+      stateId,
+      cityId,
       isActive
     });
 

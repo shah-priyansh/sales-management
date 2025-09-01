@@ -54,8 +54,7 @@ export const checkAuthStatus = createAsyncThunk(
       // Set auth header
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-      const response = await axios.get(`${API_URL}/auth/me`);
-      return response.data;
+      return token;
     } catch (error) {
       // Check if it's a network error or server error
       if (error.response) {

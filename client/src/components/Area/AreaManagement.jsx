@@ -1,31 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Search, Edit, Trash2, Eye, MapPin, Building2, Calendar } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
-import { addArea, deleteArea, toggleAreaStatus, selectAreas } from '../../store/slices/areaSlice';
+import { addArea, deleteArea, toggleAreaStatus, selectAreas, fetchAreas, selectAreasLoading, selectAreasError, selectAreasPagination } from '../../store/slices/areaSlice';
 import { Button, Input, Card, CardContent, Badge, Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '../ui';
 import AddAreaModal from './AddAreaModal';
+import { formatDate } from '../../utils/authUtils';
 
 const AreaManagement = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const dispatch = useDispatch();
   const areas = useSelector(selectAreas);
+  const areasLoading = useSelector(selectAreasLoading);
+  const areasError = useSelector(selectAreasError);
+  const pagination = useSelector(selectAreasPagination);
 
-  // Filter areas based on search
+  // Fetch areas on component mount and when search/page changes
+  useEffect(() => {
+    dispatch(fetchAreas({ 
+      page: currentPage, 
+      search: searchTerm,
+      limit: 20 
+    }));
+  }, [dispatch, currentPage, searchTerm]);
+
+  // Filter areas based on search (client-side filtering for better UX)
   const filteredAreas = areas.filter(area =>
     area.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     area.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    area.state?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     area.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleAddArea = (areaData) => {
-    const newArea = {
-      ...areaData,
-      _id: Date.now().toString(),
-      createdAt: new Date().toISOString().split('T')[0],
-      isActive: areaData.isActive === 'true' || areaData.isActive === true
-    };
-    dispatch(addArea(newArea));
+  const handleAddAreaSuccess = () => {
+    // This function is called when area is successfully created via API
+    console.log('Area created successfully via API');
     setIsAddModalOpen(false);
   };
 
@@ -53,6 +63,21 @@ const AreaManagement = () => {
 
   return (
     <div className="p-6 min-h-screen">
+      {/* Loading State */}
+      {areasLoading && (
+        <div className="flex justify-center items-center py-8">
+          <div className="text-lg text-gray-600">Loading areas...</div>
+        </div>
+      )}
+
+      {/* Error State */}
+      {areasError && (
+        <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
+          <div className="text-red-800">
+            <strong>Error:</strong> {areasError}
+          </div>
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -64,7 +89,7 @@ const AreaManagement = () => {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Total Areas</p>
-                <p className="text-2xl font-bold text-gray-900">{areas.length}</p>
+                <p className="text-2xl font-bold text-gray-900">{pagination.total}</p>
               </div>
             </div>
           </CardContent>
@@ -137,17 +162,31 @@ const AreaManagement = () => {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[200px]">Area</TableHead>
+                <TableHead>State</TableHead>
                 <TableHead>City</TableHead>
-                <TableHead>Description</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredAreas.map((area) => (
+              {areasLoading ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8">
+                    <div className="text-gray-500">Loading areas...</div>
+                  </TableCell>
+                </TableRow>
+              ) : filteredAreas.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8">
+                    <div className="text-gray-500">
+                      {searchTerm ? 'No areas found matching your search.' : 'No areas found. Create your first area to get started.'}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredAreas.map((area) => (
                 <TableRow key={area._id}>
-                  {/* Area Info */}
                   <TableCell className="font-medium">
                     <div className="flex items-center">
                       <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
@@ -157,10 +196,16 @@ const AreaManagement = () => {
                         <div className="text-sm font-medium text-gray-900">
                           {area.name}
                         </div>
-                        <div className="text-sm text-gray-500">
-                          ID: {area._id.slice(-4)}
-                        </div>
+                
                       </div>
+                    </div>
+                  </TableCell>
+
+                  {/* State */}
+                  <TableCell>
+                    <div className="flex items-center">
+                      <MapPin className="h-4 w-4 text-gray-400 mr-2" />
+                      <span className="text-sm text-gray-900">{area.state}</span>
                     </div>
                   </TableCell>
 
@@ -169,13 +214,6 @@ const AreaManagement = () => {
                     <div className="flex items-center">
                       <Building2 className="h-4 w-4 text-gray-400 mr-2" />
                       <span className="text-sm text-gray-900">{area.city}</span>
-                    </div>
-                  </TableCell>
-
-                  {/* Description */}
-                  <TableCell>
-                    <div className="text-sm text-gray-900 max-w-xs truncate">
-                      {area.description || 'No description'}
                     </div>
                   </TableCell>
 
@@ -188,7 +226,7 @@ const AreaManagement = () => {
                   <TableCell>
                     <div className="flex items-center">
                       <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                      {area.createdAt}
+                      {formatDate(area.createdAt)}
                     </div>
                   </TableCell>
 
@@ -223,28 +261,65 @@ const AreaManagement = () => {
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+                ))
+              )}
             </TableBody>
           </Table>
-
-          {/* Empty State */}
-          {filteredAreas.length === 0 && (
-            <div className="text-center py-12">
-              <MapPin className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No areas found</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                {searchTerm ? 'Try adjusting your search criteria.' : 'Get started by creating a new area.'}
-              </p>
-            </div>
-          )}
         </CardContent>
       </Card>
+
+      {/* Pagination */}
+      {pagination.totalPages > 1 && (
+        <Card className="mt-6">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-gray-700">
+                Showing {((pagination.currentPage - 1) * pagination.limit) + 1} to {Math.min(pagination.currentPage * pagination.limit, pagination.total)} of {pagination.total} areas
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={pagination.currentPage === 1}
+                >
+                  Previous
+                </Button>
+                <div className="flex items-center space-x-1">
+                  {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                    const pageNum = i + 1;
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={pagination.currentPage === pageNum ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(pageNum)}
+                        className="w-8 h-8 p-0"
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, pagination.totalPages))}
+                  disabled={pagination.currentPage === pagination.totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Add Area Modal */}
       <AddAreaModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onSuccess={handleAddArea}
+        onSuccess={handleAddAreaSuccess}
       />
     </div>
   );

@@ -2,11 +2,14 @@ import { LogOut, Menu, Settings, User } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { logoutUser } from '../../store/slices/authSlice';
+import { useLocation } from 'react-router-dom';
 
 const Header = ({ user, onMenuClick }) => {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef(null);
   const dispatch = useDispatch();
+
+  const pathname = useLocation();
   const logout = useCallback(() => {
     dispatch(logoutUser());
   }, [dispatch]);
@@ -42,11 +45,10 @@ const Header = ({ user, onMenuClick }) => {
               <span className="sr-only">Open sidebar</span>
               <Menu className="h-6 w-6" />
             </button>
-            
+
             <div className="ml-4 lg:ml-0">
-                <image src="/images/logo.png" alt="BizKey CRM" width={100} height={100} />
-              <h1 className="text-xl font-semibold text-gray-900">
-                BizKey CRM
+              <h1 className="text-xl font-semibold text-gray-900 capitalize">
+                {pathname?.pathname.split('/')[1]}
               </h1>
             </div>
           </div>
@@ -78,7 +80,7 @@ const Header = ({ user, onMenuClick }) => {
                     <div className="text-gray-500">{user.email}</div>
                     <div className="text-gray-500 capitalize">{user.role}</div>
                   </div>
-                  
+
                   <button
                     onClick={() => setUserMenuOpen(false)}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
@@ -86,7 +88,7 @@ const Header = ({ user, onMenuClick }) => {
                     <User className="mr-3 h-4 w-4" />
                     Profile
                   </button>
-                  
+
                   <button
                     onClick={() => setUserMenuOpen(false)}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
@@ -94,7 +96,7 @@ const Header = ({ user, onMenuClick }) => {
                     <Settings className="mr-3 h-4 w-4" />
                     Settings
                   </button>
-                  
+
                   <button
                     onClick={handleLogout}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"

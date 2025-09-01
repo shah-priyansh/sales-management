@@ -1,25 +1,156 @@
-import React from 'react';
+import { MapPin } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { MapPin, Building2, FileText } from 'lucide-react';
-import { Button, Input, Textarea, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../ui';
+import { useDispatch, useSelector } from 'react-redux';
+import { addAreaFetch } from '../../store/slices/areaSlice';
+import {
+  clearCitiesByState,
+  fetchCitiesByState,
+  selectCitiesByState,
+  selectCitiesError,
+  selectCitiesLoading
+} from '../../store/slices/citySlice';
+import {
+  fetchStates,
+  selectStates,
+  selectStatesError,
+  selectStatesLoading
+} from '../../store/slices/stateSlice';
+import { Button, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui';
 
-const AddAreaModal = ({ isOpen, onClose, onSuccess }) => {
+const AddAreaModal = ({ isOpen, onClose, onSuccess }) => {  
+  const dispatch = useDispatch();
+  const [selectedState, setSelectedState] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
+
   const {
     register,
     handleSubmit,
     formState: { errors },
-    reset
+    reset,
+    setValue,
+    watch
   } = useForm();
 
-  const onSubmit = (data) => {
-    onSuccess(data);
-    reset();
+  // Redux selectors
+  const states = useSelector(selectStates);
+  const statesLoading = useSelector(selectStatesLoading);
+  const statesError = useSelector(selectStatesError);
+  const cities = useSelector(selectCitiesByState);
+  const citiesLoading = useSelector(selectCitiesLoading);
+  const citiesError = useSelector(selectCitiesError);
+
+  // Watch form values
+  const watchedState = watch('state');
+  const watchedCity = watch('city');
+
+  // Fetch states on component mount
+  useEffect(() => {
+    if (isOpen && states.length === 0) {
+      dispatch(fetchStates());
+    }
+  }, [isOpen, dispatch, states.length]);
+
+  // Auto-fetch Gujarat cities when component opens (special case)
+  useEffect(() => {
+    if (isOpen && states.length > 0) {
+      const gujaratState = states.find(state => state.name.toLowerCase() === 'gujarat');
+      if (gujaratState && !selectedState) {
+        setSelectedState(gujaratState._id);
+        setValue('state', gujaratState._id);
+        dispatch(fetchCitiesByState(gujaratState._id));
+      }
+    }
+  }, [isOpen, states, selectedState, setValue, dispatch]);
+
+  // Handle state selection
+  useEffect(() => {
+    if (watchedState && watchedState !== selectedState) {
+      setSelectedState(watchedState);
+      setSelectedCity(''); // Reset city when state changes
+      setValue('city', '');
+      dispatch(clearCitiesByState());
+
+      // Fetch cities for selected state
+      dispatch(fetchCitiesByState(watchedState));
+    }
+  }, [watchedState, selectedState, setValue, dispatch]);
+
+  // Handle city selection
+  useEffect(() => {
+    if (watchedCity && watchedCity !== selectedCity) {
+      setSelectedCity(watchedCity);
+    }
+  }, [watchedCity, selectedCity]);
+
+  // Check if selected state is Gujarat
+  const isGujarat = states.find(state => state._id === selectedState)?.name?.toLowerCase() === 'gujarat';
+
+  const onSubmit = async (data) => {
+    console.log('Form submitted with data:', data);
+    
+    if (!data.state) {
+      setValue('state', '', { shouldValidate: true });
+      return;
+    }
+    if (!data.city) {
+      setValue('city', '', { shouldValidate: true });
+      return;
+    }
+
+    // Get state and city names for the form data
+    const selectedStateData = states.find(state => state._id === data.state);
+    const selectedCityData = cities.find(city => city._id === data.city);
+    console.log('Selected state data:', selectedStateData);
+    
+    const formData = {
+      ...data,
+      state: selectedStateData?.name || '',
+      city: selectedCityData?.name || '',
+      stateId: data.state,
+      cityId: data.city
+    };
+
+    
+    try {
+      // Call the API to create the area
+      const result = await dispatch(addAreaFetch(formData));
+      console.log('API call result:', result);
+      
+      if (addAreaFetch.fulfilled.match(result)) {
+        // API call successful
+        console.log('Area created successfully:', result.payload);
+        reset();
+        setSelectedState('');
+        setSelectedCity('');
+        onClose(); // Close the modal
+      } else {
+        // API call failed
+        console.error('Failed to create area:', result.error);
+      }
+    } catch (error) {
+      console.error('Error creating area:', error);
+    }
   };
 
   const handleClose = () => {
     reset();
+    setSelectedState('');
+    setSelectedCity('');
+    dispatch(clearCitiesByState());
     onClose();
   };
+
+  // Prepare options for comboboxes
+  const stateOptions = states.map(state => ({
+    value: state._id,
+    label: state.name
+  }));
+
+  const cityOptions = cities.map(city => ({
+    value: city._id,
+    label: city.name
+  }));
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -39,6 +170,99 @@ const AddAreaModal = ({ isOpen, onClose, onSuccess }) => {
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">
+              State *
+            </label>
+            <div className="relative">
+              <Select
+                value={selectedState}
+                onValueChange={(value) => {
+                  setValue('state', value, { shouldValidate: true });
+                }}
+                disabled={statesLoading}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a state..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {statesLoading ? (
+                    <SelectItem value="loading" disabled>
+                      Loading states...
+                    </SelectItem>
+                  ) : stateOptions.length === 0 ? (
+                    <SelectItem value="no-states" disabled>
+                      No states found
+                    </SelectItem>
+                  ) : (
+                    stateOptions.map((state) => (
+                      <SelectItem key={state.value} value={state.value}>
+                        {state.label}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+              <input
+                type="hidden"
+                {...register('state', { required: 'State is required' })}
+              />
+            </div>
+            {errors.state && (
+              <p className="text-sm text-red-600">{errors.state.message}</p>
+            )}
+            {statesError && (
+              <p className="text-sm text-red-600">{statesError}</p>
+            )}
+          </div>
+          {(selectedState || isGujarat) && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">
+                City *
+              </label>
+              <div className="relative">
+                <Select
+                  value={selectedCity}
+                  onValueChange={(value) => {
+                    setValue('city', value, { shouldValidate: true });
+                  }}
+                  disabled={citiesLoading || (!selectedState && !isGujarat)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a city..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {citiesLoading ? (
+                      <SelectItem value="loading-cities" disabled>
+                        Loading cities...
+                      </SelectItem>
+                    ) : cityOptions.length === 0 ? (
+                      <SelectItem value="no-cities" disabled>
+                        No cities found for this state
+                      </SelectItem>
+                    ) : (
+                      cityOptions.map((city) => (
+                        <SelectItem key={city.value} value={city.value}>
+                          {city.label}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+                <input
+                  type="hidden"
+                  {...register('city', { required: 'City is required' })}
+                />
+              </div>
+              {errors.city && (
+                <p className="text-sm text-red-600">{errors.city.message}</p>
+              )}
+              {citiesError && (
+                <p className="text-sm text-red-600">{citiesError}</p>
+              )}
+            </div>
+          )}
+
           {/* Area Name */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">
@@ -46,7 +270,7 @@ const AddAreaModal = ({ isOpen, onClose, onSuccess }) => {
             </label>
             <div className="relative">
               <Input
-                {...register('name', { 
+                {...register('name', {
                   required: 'Area name is required',
                   minLength: { value: 2, message: 'Min 2 characters' }
                 })}
@@ -58,43 +282,6 @@ const AddAreaModal = ({ isOpen, onClose, onSuccess }) => {
             {errors.name && (
               <p className="text-sm text-red-600">{errors.name.message}</p>
             )}
-          </div>
-
-          {/* City */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">
-              City *
-            </label>
-            <div className="relative">
-              <Input
-                {...register('city', { 
-                  required: 'City is required',
-                  minLength: { value: 2, message: 'Min 2 characters' }
-                })}
-                placeholder="e.g., New York"
-                className="pl-10"
-              />
-              <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            </div>
-            {errors.city && (
-              <p className="text-sm text-red-600">{errors.city.message}</p>
-            )}
-          </div>
-
-          {/* Description */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">
-              Description
-            </label>
-            <div className="relative">
-              <Textarea
-                {...register('description')}
-                placeholder="Describe the area characteristics, target market, etc."
-                rows={3}
-                className="pl-10"
-              />
-              <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-            </div>
           </div>
 
           {/* Status Toggle */}

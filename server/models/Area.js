@@ -16,6 +16,21 @@ const areaSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  state: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  stateId: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  cityId: {
+    type: String,
+    required: true,
+    trim: true
+  },
   isActive: {
     type: Boolean,
     default: true

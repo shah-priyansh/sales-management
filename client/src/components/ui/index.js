@@ -13,7 +13,7 @@ export {
   DialogHeader,
   DialogFooter,
   DialogTitle,
-  DialogDescription,
+  DialogDescription,  
 } from './dialog'
 export {
   Select,
