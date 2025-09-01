@@ -44,8 +44,9 @@ const Header = ({ user, onMenuClick }) => {
             </button>
             
             <div className="ml-4 lg:ml-0">
+                <image src="/images/logo.png" alt="BizKey CRM" width={100} height={100} />
               <h1 className="text-xl font-semibold text-gray-900">
-                Sales Management System
+                BizKey CRM
               </h1>
             </div>
           </div>

@@ -1,19 +1,18 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { Provider } from 'react-redux';
-import { store } from './store';
-import { 
-  PublicRoute, 
-  ProtectedRoute, 
-} from './middleware';
-import Login from './components/Login';
-import Layout from './components/layout/Layout';
-import Dashboard from './components/Dashboard';
+import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
+import { AreaManagement } from './components/Area';
 import Clients from './components/Client';
-import Area from './components/Area';
-import User from './components/User';
-import ComponentTest from './components/ComponentTest';
+import Dashboard from './components/Dashboard';
+import Login from './components/Login';
+import UserManagement from './components/User/UserManagement';
+import Layout from './components/layout/Layout';
+import {
+  ProtectedRoute,
+  PublicRoute,
+} from './middleware';
+import { store } from './store';
 
 const AppRoutes = () => {
   return (
@@ -42,7 +41,7 @@ const AppRoutes = () => {
           path="users"
           element={
             <ProtectedRoute allowedRoles={['admin']}>
-              <User />
+              <UserManagement />
             </ProtectedRoute>
           }
         />
@@ -58,15 +57,7 @@ const AppRoutes = () => {
           path="areas"
           element={
             <ProtectedRoute allowedRoles={['admin']}>
-              <Area />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="test"
-          element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <ComponentTest />
+              <AreaManagement />
             </ProtectedRoute>
           }
         />

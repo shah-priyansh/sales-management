@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { Eye, EyeOff, User, Lock } from 'lucide-react';
+import { Eye, EyeOff, User, Lock, Loader2 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { loginUser, selectAuthLoading, selectAuthError } from '../store/slices/authSlice';
+import { Button, Input } from './ui';
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -38,7 +39,7 @@ const Login = () => {
             <User className="h-8 w-8 text-white" />
           </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sales Management System
+            BizKey CRM
           </h2>
         </div>
 
@@ -49,7 +50,7 @@ const Login = () => {
                 Username or Email
               </label>
               <div className="mt-1 relative">
-                <input
+                <Input
                   id="username"
                   type="text"
                   {...register('username', { required: 'Username or email is required' })}
@@ -68,7 +69,7 @@ const Login = () => {
                 Password
               </label>
               <div className="mt-1 relative">
-                <input
+                <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   {...register('password', { required: 'Password is required' })}
@@ -101,17 +102,18 @@ const Login = () => {
           )}
 
           <div>
-            <button
-              type="submit"
+            <Button
               disabled={loading}
               className="btn-primary w-full flex justify-center items-center"
             >
               {loading ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white">
+                  <Loader2 className="h-5 w-5" />
+                </div>
               ) : (
                 'Sign In'
               )}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

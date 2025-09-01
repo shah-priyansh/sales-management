@@ -3,6 +3,8 @@ const adminRoutes = require('./admin');
 const salesmenRoutes = require('./salesmen');
 const clientsRoutes = require('./clients');
 const areasRoutes = require('./areas');
+const statesRoutes = require('./states');
+const citiesRoutes = require('./cities');
 
 const v1Routes = (app) => {
     app.use('/v1/auth', authRoutes);
@@ -10,6 +12,8 @@ const v1Routes = (app) => {
     app.use('/v1/salesmen', salesmenRoutes);
     app.use('/v1/clients', clientsRoutes);
     app.use('/v1/areas', areasRoutes);
+    app.use('/v1/states', statesRoutes);
+    app.use('/v1/cities', citiesRoutes);
 };
 
 module.exports = v1Routes;
