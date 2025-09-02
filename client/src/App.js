@@ -15,6 +15,7 @@ import {
 import { store } from './store';
 import { logoutUser } from './store/slices/authSlice';
 import './utils/axiosConfig'; // Initialize axios interceptors
+import { ClientManagement } from './components/Client';
 
 // Component to handle auth events
 const AuthEventHandler = () => {
@@ -74,7 +75,7 @@ const AppRoutes = () => {
           path="clients"
           element={
             <ProtectedRoute allowedRoles={['admin']}>
-              <Clients />
+              <ClientManagement />
             </ProtectedRoute>
           }
         />

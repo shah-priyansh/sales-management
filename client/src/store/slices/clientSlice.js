@@ -1,128 +1,91 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
-import toast from 'react-hot-toast';
+import apiClient from '../../utils/axiosConfig';
 
-// Async thunks
-export const fetchClients = createAsyncThunk(
-  'client/fetchClients',
-  async (params = {}, { rejectWithValue, getState }) => {
-    try {
-      const response = await axios.get('/api/clients', { params });
-      return response.data;
-    } catch (error) {
-      const message = error.response?.data?.message || 'Failed to fetch clients';
-      return rejectWithValue(message);
+// Async thunks for API calls
+export const fetchClients = createAsyncThunk('clients/fetchClients', async (params = {}, { rejectWithValue }) => {
+  try {
+    const { page = 1, search = '', area = '', status = '', limit = 20 } = params;
+    let url = `/clients?page=${page}&search=${search}&limit=${limit}`;
+    if (area) {
+      url += `&area=${area}`;
     }
+    if (status) {
+      url += `&status=${status}`;
+    }
+    const response = await apiClient.get(url);
+    return response.data;
+  } catch (error) {
+    return rejectWithValue(error.response?.data?.message || 'Failed to fetch clients');
   }
-);
+});
 
-export const fetchClientById = createAsyncThunk(
-  'client/fetchClientById',
-  async (id, { rejectWithValue }) => {
-    try {
-      const response = await axios.get(`/api/clients/${id}`);
-      return response.data;
-    } catch (error) {
-      const message = error.response?.data?.message || 'Failed to fetch client';
-      return rejectWithValue(message);
-    }
+export const deleteClientFetch = createAsyncThunk('clients/deleteClientFetch', async (clientId, { rejectWithValue }) => {
+  try {
+    await apiClient.delete(`/clients/${clientId}`);
+    return clientId;
+  } catch (error) {
+    return rejectWithValue(error.response?.data?.message || 'Failed to delete client');
   }
-);
+});
 
-export const createClient = createAsyncThunk(
-  'client/createClient',
-  async (clientData, { rejectWithValue }) => {
-    try {
-      const response = await axios.post('/api/clients', clientData);
-      toast.success('Client created successfully');
-      return response.data;
-    } catch (error) {
-      const message = error.response?.data?.message || 'Failed to create client';
-      return rejectWithValue(message);
-    }
+export const toggleClientStatusFetch = createAsyncThunk('clients/toggleClientStatusFetch', async (clientId, { rejectWithValue }) => {
+  try {
+    const response = await apiClient.patch(`/clients/${clientId}/toggle-status`);
+    return response.data;
+  } catch (error) {
+    return rejectWithValue(error.response?.data?.message || 'Failed to toggle client status');
   }
-);
+});
 
-export const updateClient = createAsyncThunk(
-  'client/updateClient',
-  async ({ id, clientData }, { rejectWithValue }) => {
-    try {
-      const response = await axios.put(`/api/clients/${id}`, clientData);
-      toast.success('Client updated successfully');
-      return response.data;
-    } catch (error) {
-      const message = error.response?.data?.message || 'Failed to update client';
-      return rejectWithValue(message);
-    }
+export const createClientFetch = createAsyncThunk('clients/createClientFetch', async (clientData, { rejectWithValue }) => {
+  try {
+    const response = await apiClient.post('/clients', clientData);
+    return response.data;
+  } catch (error) {
+    return rejectWithValue(error.response?.data?.message || 'Failed to create client');
   }
-);
+});
 
-export const deleteClient = createAsyncThunk(
-  'client/deleteClient',
-  async (id, { rejectWithValue }) => {
-    try {
-      await axios.delete(`/api/clients/${id}`);
-      toast.success('Client deactivated successfully');
-      return id;
-    } catch (error) {
-      const message = error.response?.data?.message || 'Failed to deactivate client';
-      return rejectWithValue(message);
-    }
+export const updateClientFetch = createAsyncThunk('clients/updateClientFetch', async ({ clientId, clientData }, { rejectWithValue }) => {
+  try {
+    const response = await apiClient.put(`/clients/${clientId}`, clientData);
+    return response.data;
+  } catch (error) {
+    return rejectWithValue(error.response?.data?.message || 'Failed to update client');
   }
-);
-
-export const assignSalesman = createAsyncThunk(
-  'client/assignSalesman',
-  async ({ id, salesmanId }, { rejectWithValue }) => {
-    try {
-      const response = await axios.post(`/api/clients/${id}/assign-salesman`, { salesmanId });
-      toast.success('Salesman assigned successfully');
-      return response.data;
-    } catch (error) {
-      const message = error.response?.data?.message || 'Failed to assign salesman';
-      return rejectWithValue(message);
-    }
-  }
-);
+});
 
 const initialState = {
   clients: [],
-  totalClients: 0,
-  currentPage: 1,
-  totalPages: 1,
-  loading: false,
-  error: null,
-  currentClient: null,
-  filters: {
-    area: '',
-    status: '',
-    search: '',
+  pagination: {
+    currentPage: 1,
+    totalPages: 1,
+    total: 0,
+    limit: 20
   },
+  loading: false,
+  error: null
 };
 
 const clientSlice = createSlice({
-  name: 'client',
+  name: 'clients',
   initialState,
   reducers: {
+    addClient: (state, action) => {
+      state.clients.push(action.payload);
+    },
+    deleteClient: (state, action) => {
+      state.clients = state.clients.filter(client => client._id !== action.payload);
+    },
+    toggleClientStatus: (state, action) => {
+      const client = state.clients.find(c => c._id === action.payload);
+      if (client) {
+        client.isActive = !client.isActive;
+      }
+    },
     clearError: (state) => {
       state.error = null;
-    },
-    setCurrentClient: (state, action) => {
-      state.currentClient = action.payload;
-    },
-    clearCurrentClient: (state) => {
-      state.currentClient = null;
-    },
-    setFilters: (state, action) => {
-      state.filters = { ...state.filters, ...action.payload };
-    },
-    clearFilters: (state) => {
-      state.filters = {
-        area: '',
-        status: '',
-        search: '',
-      };
-    },
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -134,131 +97,82 @@ const clientSlice = createSlice({
       .addCase(fetchClients.fulfilled, (state, action) => {
         state.loading = false;
         state.clients = action.payload.clients;
-        state.totalClients = action.payload.total;
-        state.currentPage = action.payload.currentPage;
-        state.totalPages = action.payload.totalPages;
-        state.error = null;
+        state.pagination = {
+          currentPage: action.payload.currentPage,
+          totalPages: action.payload.totalPages,
+          total: action.payload.total,
+          limit: 20
+        };
       })
       .addCase(fetchClients.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        toast.error(action.payload);
       })
-      
-      // Fetch client by ID
-      .addCase(fetchClientById.pending, (state) => {
+      // Delete client fetch
+      .addCase(deleteClientFetch.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchClientById.fulfilled, (state, action) => {
+      .addCase(deleteClientFetch.fulfilled, (state, action) => {
         state.loading = false;
-        state.currentClient = action.payload;
-        state.error = null;
+        state.clients = state.clients.filter(client => client._id !== action.payload);
       })
-      .addCase(fetchClientById.rejected, (state, action) => {
+      .addCase(deleteClientFetch.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        toast.error(action.payload);
       })
-      
-      // Create client
-      .addCase(createClient.pending, (state) => {
+      // Toggle client status fetch
+      .addCase(toggleClientStatusFetch.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(createClient.fulfilled, (state, action) => {
+      .addCase(toggleClientStatusFetch.fulfilled, (state, action) => {
         state.loading = false;
-        state.clients.unshift(action.payload);
-        state.totalClients += 1;
-        state.error = null;
+        const client = state.clients.find(c => c._id === action.payload.data._id);
+        if (client) {
+          client.isActive = action.payload.data.isActive;
+        }
       })
-      .addCase(createClient.rejected, (state, action) => {
+      .addCase(toggleClientStatusFetch.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        toast.error(action.payload);
       })
-      
-      // Update client
-      .addCase(updateClient.pending, (state) => {
+      // Create client fetch
+      .addCase(createClientFetch.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(updateClient.fulfilled, (state, action) => {
+      .addCase(createClientFetch.fulfilled, (state, action) => {
+        state.loading = false;
+        state.clients.push(action.payload);
+        state.pagination.total++;
+      })
+      .addCase(createClientFetch.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Update client fetch
+      .addCase(updateClientFetch.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateClientFetch.fulfilled, (state, action) => {
         state.loading = false;
         const index = state.clients.findIndex(client => client._id === action.payload._id);
         if (index !== -1) {
           state.clients[index] = action.payload;
         }
-        if (state.currentClient?._id === action.payload._id) {
-          state.currentClient = action.payload;
-        }
-        state.error = null;
       })
-      .addCase(updateClient.rejected, (state, action) => {
+      .addCase(updateClientFetch.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        toast.error(action.payload);
-      })
-      
-      // Delete client
-      .addCase(deleteClient.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(deleteClient.fulfilled, (state, action) => {
-        state.loading = false;
-        const index = state.clients.findIndex(client => client._id === action.payload);
-        if (index !== -1) {
-          state.clients[index].isActive = false;
-        }
-        state.error = null;
-      })
-      .addCase(deleteClient.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-        toast.error(action.payload);
-      })
-      
-      // Assign salesman
-      .addCase(assignSalesman.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(assignSalesman.fulfilled, (state, action) => {
-        state.loading = false;
-        const index = state.clients.findIndex(client => client._id === action.payload._id);
-        if (index !== -1) {
-          state.clients[index] = action.payload;
-        }
-        if (state.currentClient?._id === action.payload._id) {
-          state.currentClient = action.payload;
-        }
-        state.error = null;
-      })
-      .addCase(assignSalesman.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-        toast.error(action.payload);
       });
-  },
+  }
 });
 
-export const { 
-  clearError, 
-  setCurrentClient, 
-  clearCurrentClient, 
-  setFilters, 
-  clearFilters 
-} = clientSlice.actions;
-
-// Selectors
-export const selectClients = (state) => state.client.clients;
-export const selectClientLoading = (state) => state.client.loading;
-export const selectClientError = (state) => state.client.error;
-export const selectTotalClients = (state) => state.client.totalClients;
-export const selectCurrentPage = (state) => state.client.currentPage;
-export const selectTotalPages = (state) => state.client.totalPages;
-export const selectCurrentClient = (state) => state.client.currentClient;
-export const selectClientFilters = (state) => state.client.filters;
-
+export const { addClient, deleteClient, toggleClientStatus, clearError } = clientSlice.actions;
+export const selectClients = (state) => state?.client?.clients || [];
+export const selectClientsLoading = (state) => state?.client?.loading || false;
+export const selectClientsError = (state) => state?.client?.error || null;
+export const selectClientsPagination = (state) => state?.client?.pagination || {};
 export default clientSlice.reducer;

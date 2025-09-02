@@ -35,14 +35,10 @@ const clientSchema = new mongoose.Schema({
     ref: 'Area',
     required: true
   },
-  assignedSalesman: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  },
   status: {
     type: String,
-    enum: ['active', 'inactive', 'prospect', 'customer'],
-    default: 'prospect'
+    enum: ['active', 'inactive'],
+    default: 'active'
   },
   notes: {
     type: String,
@@ -57,7 +53,7 @@ const clientSchema = new mongoose.Schema({
 });
 
 // Index for efficient queries
-clientSchema.index({ area: 1, assignedSalesman: 1, status: 1 });
+clientSchema.index({ area: 1, status: 1 });
 clientSchema.index({ name: 1, company: 1 });
 
 module.exports = mongoose.model('Client', clientSchema);
