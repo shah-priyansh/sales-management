@@ -211,14 +211,13 @@ const deleteArea = async (req, res) => {
       });
     }
 
-    // Soft delete - set isActive to false
-    area.isActive = false;
-    await area.save();
+    // Hard delete - permanently remove from database
+    await Area.findByIdAndDelete(id);
 
     res.json({
       success: true,
-      message: 'Area deactivated successfully',
-      data: area
+      message: 'Area deleted successfully',
+      data: { id: area._id, name: area.name }
     });
   } catch (error) {
     console.error('Delete area error:', error);

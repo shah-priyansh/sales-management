@@ -35,6 +35,7 @@ const AddAreaModal = ({ isOpen, onClose, area = null }) => {
       name: '',
       state: '',
       city: '',
+      isActive: 'true'
     }
   });
 
@@ -50,10 +51,19 @@ const AddAreaModal = ({ isOpen, onClose, area = null }) => {
   const watchedState = watch('state');
   const watchedCity = watch('city');
 
+  useEffect(() => {
+    if (isOpen) {
+      reset();
+    }
+  }, [isOpen, reset]);
+
   // Initialize form with area data when editing
   useEffect(() => {
     if (isOpen && area && states.length > 0) {
+      reset();
+      
       setValue('name', area.name || '');
+      setValue('isActive', area.isActive ? 'true' : 'false');
       
       // Find the state by name and set the state ID
       const stateData = states.find(state => state.name === area.state);
@@ -68,14 +78,14 @@ const AddAreaModal = ({ isOpen, onClose, area = null }) => {
       // Set the city name for display (will be updated when cities load)
       setSelectedCity('');
     }
-  }, [isOpen, area, setValue, states, dispatch]);
+  }, [isOpen, area, setValue, states, dispatch, reset]);
 
   // Set city ID when cities are loaded in edit mode
   useEffect(() => {
     if (isOpen && area && cities.length > 0 && !selectedCity) {
       const cityData = cities.find(city => city.name === area.city);
       if (cityData) {
-        setValue('city', cityData._id);
+        setValue('city', cityData._id, { shouldValidate: false });
         setSelectedCity(cityData._id);
       }
     }
@@ -125,15 +135,6 @@ const AddAreaModal = ({ isOpen, onClose, area = null }) => {
 
   const onSubmit = async (data) => {
     console.log('Form submitted with data:', data);
-    
-    if (!data.state) {
-      setValue('state', '', { shouldValidate: true });
-      return;
-    }
-    if (!data.city) {
-      setValue('city', '', { shouldValidate: true });
-      return;
-    }
 
     // Get state and city names for the form data
     const selectedStateData = states.find(state => state._id === data.state);
@@ -165,6 +166,7 @@ const AddAreaModal = ({ isOpen, onClose, area = null }) => {
         reset();
         setSelectedState('');
         setSelectedCity('');
+        dispatch(clearCitiesByState());
         onClose(); // Close the modal
       } else {
         // API call failed
@@ -337,7 +339,6 @@ const AddAreaModal = ({ isOpen, onClose, area = null }) => {
                   type="radio"
                   value="true"
                   {...register('isActive')}
-                  defaultChecked
                   className="mr-2 text-blue-600 focus:ring-blue-500"
                 />
                 <span className="text-sm text-gray-900">Active</span>
