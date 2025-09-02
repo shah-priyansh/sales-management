@@ -1,13 +1,12 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
 import apiClient from '../../utils/axiosConfig';
 
-const API_URL = process.env.REACT_APP_API_URL;
 
 // Async thunks for API calls
-export const fetchUsers = createAsyncThunk('users/fetchUsers', async (_, { rejectWithValue }) => {
+export const fetchUsers = createAsyncThunk('users/fetchUsers', async (params = {}, { rejectWithValue }) => {
   try {
-    const response = await apiClient.get('/admin/users');
+    const { page = 1, search = '', limit = 20 } = params;
+    const response = await apiClient.get(`/admin/users?page=${page}&search=${search}&limit=${limit}`);
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data?.message || 'Failed to fetch users');
@@ -41,8 +40,24 @@ export const createUserFetch = createAsyncThunk('users/createUserFetch', async (
   }
 });
 
+export const updateUserFetch = createAsyncThunk('users/updateUserFetch', async ({ userId, userData }, { rejectWithValue }) => {
+  try {
+    const response = await apiClient.put(`/admin/users/${userId}`, userData);
+    return response.data;
+  } catch (error) {
+    return rejectWithValue(error.response?.data?.message || 'Failed to update user');
+  }
+});
+
 const initialState = {
   users: [],
+  pagination: {
+    currentPage: 1,
+    totalPages: 1,
+    total: 0,
+    limit: 20
+  },
+
   loading: false,
   error: null
 };
@@ -76,7 +91,8 @@ const userSlice = createSlice({
       })
       .addCase(fetchUsers.fulfilled, (state, action) => {
         state.loading = false;
-        state.users = action.payload;
+        state.users = action.payload.users;
+        state.pagination = action.payload.pagination;
       })
       .addCase(fetchUsers.rejected, (state, action) => {
         state.loading = false;
@@ -119,8 +135,25 @@ const userSlice = createSlice({
       .addCase(createUserFetch.fulfilled, (state, action) => {
         state.loading = false;
         state.users.push(action.payload);
+        state.pagination.total++;
       })
       .addCase(createUserFetch.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Update user fetch
+      .addCase(updateUserFetch.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateUserFetch.fulfilled, (state, action) => {
+        state.loading = false;
+        const index = state.users.findIndex(user => user._id === action.payload._id);
+        if (index !== -1) {
+          state.users[index] = action.payload;
+        }
+      })
+      .addCase(updateUserFetch.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });
@@ -128,7 +161,8 @@ const userSlice = createSlice({
 });
 
 export const { addUser, deleteUser, toggleUserStatus, clearError } = userSlice.actions;
-export const selectUsers = (state) => state?.users?.users || [];
-export const selectUsersLoading = (state) => state?.users?.loading || false;
-export const selectUsersError = (state) => state?.users?.error || null;
+export const selectUsers = (state) => state?.user?.users || [];
+export const selectUsersLoading = (state) => state?.user?.loading || false;
+export const selectUsersError = (state) => state?.user?.error || null;
+export const selectUsersPagination = (state) => state?.user?.pagination || {};
 export default userSlice.reducer;

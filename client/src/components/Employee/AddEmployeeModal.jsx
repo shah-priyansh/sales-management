@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { Mail, Phone, Search, User, X } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useDispatch, useSelector } from 'react-redux';
-import { User, Mail, Phone, MapPin, Shield, Search, X } from 'lucide-react';
-import { fetchAreas, selectAreas, selectAreasLoading, selectAreasError } from '../../store/slices/areaSlice';
-import { createUserFetch, selectUsersLoading, selectUsersError } from '../../store/slices/userSlice';
 import toast from 'react-hot-toast';
-import { Button, Input, Textarea, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Card, CardContent, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchAreas, selectAreas, selectAreasError, selectAreasLoading } from '../../store/slices/areaSlice';
+import { createUserFetch, selectUsersError, selectUsersLoading, updateUserFetch } from '../../store/slices/userSlice';
+import { Button, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui';
 
-const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
+const AddUserModal = ({ isOpen, onClose, onSuccess, user = null }) => {
   const [selectedRole, setSelectedRole] = useState('salesman');
   const [selectedArea, setSelectedArea] = useState('');
   const [areaSearchTerm, setAreaSearchTerm] = useState('');
@@ -19,13 +19,14 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
   const usersLoading = useSelector(selectUsersLoading);
   const usersError = useSelector(selectUsersError);
   
+  const isEditMode = !!user;
+  
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
     setValue,
-    watch
   } = useForm();
 
   // Fetch areas when modal opens
@@ -34,6 +35,30 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
       dispatch(fetchAreas({ page: 1, limit: 100 }));
     }
   }, [isOpen, dispatch, areas.length]);
+
+  // Populate form when in edit mode
+  useEffect(() => {
+    if (isEditMode && user && isOpen && areas.length > 0) {
+      reset();
+      setValue('firstName', user.firstName);
+      setValue('lastName', user.lastName);
+      setValue('email', user.email);
+      setValue('phone', user.phone);
+      setValue('area', user.area?._id || '');
+      setSelectedRole(user.role || 'salesman');
+      setSelectedArea(user.area?._id || '');
+      // Clear area search when populating
+      setAreaSearchTerm('');
+      setDebouncedAreaSearch('');
+    }
+  }, [isEditMode, user, isOpen, reset, setValue, areas.length]);
+
+  // Update form value when selectedArea changes
+  useEffect(() => {
+    if (selectedArea) {
+      setValue('area', selectedArea, { shouldValidate: true });
+    }
+  }, [selectedArea, setValue]);
 
   // Debounced search for areas
   useEffect(() => {
@@ -64,28 +89,33 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
         ...data,
         role: selectedRole,
         area: selectedArea,
-        isActive: true
+        isActive: user?.isActive ?? true
       };
       
-      const result = await dispatch(createUserFetch(userData)).unwrap();
-      
-      toast.success('User created successfully!');
-      onSuccess(result);
+      let result;
+      if (isEditMode) {
+        result = await dispatch(updateUserFetch({ userId: user._id, userData })).unwrap();
+        toast.success('User updated successfully!');
+        // Close modal after successful update
+        onClose();
+      } else {
+        result = await dispatch(createUserFetch(userData)).unwrap();
+        toast.success(`User created successfully! Password: ${result.password}`);
+        onSuccess(result);
+      }
       
       // Reset form
       reset();
-      setSelectedRole('salesman');
       setSelectedArea('');
       setAreaSearchTerm('');
       setDebouncedAreaSearch('');
     } catch (error) {
-      toast.error(typeof error === 'string' ? error : 'Failed to create user');
+      toast.error(typeof error === 'string' ? error : `Failed to ${isEditMode ? 'update' : 'create'} user`);
     }
   };
 
   const handleClose = () => {
     reset();
-    setSelectedRole('salesman');
     setSelectedArea('');
     setAreaSearchTerm('');
     setDebouncedAreaSearch('');
@@ -102,9 +132,9 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
               <User className="h-5 w-5 text-white" />
             </div>
             <div>
-              <DialogTitle>Add New User</DialogTitle>
+              <DialogTitle>{isEditMode ? 'Edit User' : 'Add New User'}</DialogTitle>
               <DialogDescription>
-                Create a new team member with appropriate access levels
+                {isEditMode ? 'Update user information and access levels' : 'Create a new team member with appropriate access levels'}
               </DialogDescription>
             </div>
           </div>
@@ -157,7 +187,7 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
-                Email *
+                Email * {isEditMode && <span className="text-xs text-gray-500">(Cannot be changed)</span>}
               </label>
               <div className="relative">
                 <Input
@@ -170,7 +200,8 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
                   })}
                   type="email"
                   placeholder="john.doe@example.com"
-                  className="pl-10"
+                  className={`pl-10 ${isEditMode ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                  disabled={isEditMode}
                 />
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               </div>
@@ -182,19 +213,13 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
-                Password *
+                Password
               </label>
-              <Input
-                {...register('password', { 
-                  required: 'Password is required',
-                  minLength: { value: 6, message: 'Min 6 characters' }
-                })}
-                placeholder="Password"
-                type="password"
-              />
-              {errors.password && (
-                <p className="text-sm text-red-600">{errors.password.message}</p>
-              )}
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
+                <p className="text-sm text-blue-800">
+                  <strong>Auto-generated:</strong> A secure password will be automatically generated for this user.
+                </p>
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -259,9 +284,11 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
                     </div>
                   </SelectContent>
                 </Select>
+                {/* Hidden input for form validation */}
                 <input
                   type="hidden"
                   {...register('area', { required: 'Area is required' })}
+                  value={selectedArea}
                 />
               </div>
               {errors.area && (
@@ -310,7 +337,7 @@ const AddUserModal = ({ isOpen, onClose, onSuccess }) => {
               variant="gradient"
               disabled={usersLoading}
             >
-              {usersLoading ? 'Creating...' : 'Create User'}
+              {usersLoading ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update User' : 'Create User')}
             </Button>
           </DialogFooter>
         </form>

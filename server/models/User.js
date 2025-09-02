@@ -14,6 +14,10 @@ const userSchema = new mongoose.Schema({
     required: true,
     minlength: 6
   },
+  tempPassword: {
+    type: String,
+    default: null
+  },
   role: {
     type: String,
     enum: ['admin', 'salesman'],
@@ -72,6 +76,7 @@ userSchema.pre('save', async function(next) {
 userSchema.methods.getPublicProfile = function() {
   const userObject = this.toObject();
   delete userObject.password;
+  delete userObject.tempPassword;
   return userObject;
 };
 

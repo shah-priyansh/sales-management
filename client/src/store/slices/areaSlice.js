@@ -1,8 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
 import apiClient from '../../utils/axiosConfig';
 
-const API_URL = process.env.REACT_APP_API_URL;
 
 // Async thunks
 export const fetchAreas = createAsyncThunk('areas/fetchAreas', async (params = {}, { rejectWithValue }) => {
@@ -106,7 +104,6 @@ const areaSlice = createSlice({
       })
       .addCase(fetchAreas.fulfilled, (state, action) => {
         state.loading = false;
-        console.log('Fetch areas response:', action.payload);
         state.areas = action.payload.areas;
         state.pagination = action.payload.pagination;
       })

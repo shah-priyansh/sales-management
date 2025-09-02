@@ -1,8 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
 import toast from 'react-hot-toast';
 import apiClient from '../../utils/axiosConfig';
-const API_URL = process.env.REACT_APP_API_URL;
 // Async thunks
 export const loginUser = createAsyncThunk(
   'auth/loginUser',

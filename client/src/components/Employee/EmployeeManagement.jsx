@@ -1,21 +1,25 @@
-import { Calendar, Edit, Eye, Plus, Search, Trash2, User } from 'lucide-react';
-import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { Edit, Mail, Phone, Plus, Trash2, User } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { 
-  addUser, 
-  deleteUserFetch, 
-  fetchUsers, 
-  selectUsers, 
-  selectUsersLoading, 
-  selectUsersError, 
-  toggleUserStatus 
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  deleteUserFetch,
+  fetchUsers,
+  selectUsers,
+  selectUsersError,
+  selectUsersLoading,
+  selectUsersPagination,
+  toggleUserStatus,
+  updateUserFetch
 } from '../../store/slices/userSlice';
+import { formatDate } from '../../utils/authUtils';
 import { Badge, Button, Card, CardContent, EmptyTable, ErrorTable, LoadingTable, Pagination, SearchInput, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui';
 import AddUserModal from './AddEmployeeModal';
 
 const UserManagement = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -24,6 +28,7 @@ const UserManagement = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const dispatch = useDispatch();
   const users = useSelector(selectUsers);
+  const pagination = useSelector(selectUsersPagination);
   const usersLoading = useSelector(selectUsersLoading);
   const usersError = useSelector(selectUsersError);
 
@@ -52,25 +57,29 @@ const UserManagement = () => {
 
   // Fetch users on component mount and when search changes
   useEffect(() => {
-    dispatch(fetchUsers());
-  }, [dispatch, debouncedSearchTerm]);
+    dispatch(fetchUsers({
+      page: currentPage,
+      search: debouncedSearchTerm,
+      limit: 20
+    }));
+  }, [dispatch, currentPage, debouncedSearchTerm]);
 
-  // Filter users based on search
-  const filteredUsers = users.filter(user =>
-    user.firstName?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-    user.lastName?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-    user.email?.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
-  );
+  console.log(users);
 
   const handleAddUser = (userData) => {
-    const newUser = {
-      ...userData,
-      _id: Date.now().toString(),
-      createdAt: new Date().toISOString().split('T')[0],
-      isActive: userData.isActive || true
-    };
-    dispatch(addUser(newUser));
+    // User is already added to Redux store via createUserFetch.fulfilled
+    // Just close the modal - no need to fetch again
     setIsAddModalOpen(false);
+  };
+
+  const handleEditUser = (user) => {
+    setSelectedUser(user);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditModalClose = () => {
+    setIsEditModalOpen(false);
+    setSelectedUser(null);
   };
 
   const handleDeleteUser = (user) => {
@@ -86,9 +95,13 @@ const UserManagement = () => {
           // Success - user deleted
           toast.success(`User "${userToDelete.firstName} ${userToDelete.lastName}" deleted successfully`);
           setUserToDelete(null);
-          
+
           // Refetch users to update the total count
-          dispatch(fetchUsers());
+          dispatch(fetchUsers({
+            page: currentPage,
+            search: debouncedSearchTerm,
+            limit: 20
+          }));
         } else {
           // Error - show error message
           const errorMessage = result.error || 'Failed to delete user';
@@ -118,19 +131,6 @@ const UserManagement = () => {
     dispatch(toggleUserStatus(userId));
   };
 
-  const getRoleBadge = (role) => {
-    const variants = {
-      admin: 'destructive',
-      manager: 'warning',
-      salesman: 'default'
-    };
-
-    return (
-      <Badge variant={variants[role] || 'secondary'}>
-        {role.charAt(0).toUpperCase() + role.slice(1)}
-      </Badge>
-    );
-  };
 
   const getStatusBadge = (isActive, userId) => {
     return (
@@ -163,7 +163,7 @@ const UserManagement = () => {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Total Users</p>
-                <p className="text-2xl font-bold text-gray-900">{users.length}</p>
+                <p className="text-2xl font-bold text-gray-900">{pagination?.total}</p>
               </div>
             </div>
           </CardContent>
@@ -178,23 +178,7 @@ const UserManagement = () => {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Active Users</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {users.filter(u => u.isActive).length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="p-3 bg-purple-100 rounded-lg">
-                <User className="h-6 w-6 text-purple-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Salesmen</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {users.filter(u => u.role === 'salesman').length}
+                  {pagination?.total - users?.filter(u => u.isActive).length}
                 </p>
               </div>
             </div>
@@ -232,38 +216,43 @@ const UserManagement = () => {
             <Table className="w-full table-fixed border-collapse">
               <TableHeader className="sticky top-0 bg-white z-30 shadow-lg border-b-2 border-gray-200">
                 <TableRow className="bg-white hover:bg-white">
-                  <TableHead className="w-[25%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">User</TableHead>
-                  <TableHead className="w-[15%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Role</TableHead>
-                  <TableHead className="w-[20%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Contact</TableHead>
-                  <TableHead className="w-[10%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Status</TableHead>
-                  <TableHead className="w-[15%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Created</TableHead>
-                  <TableHead className="w-[15%] bg-white border-b-0 px-4 py-3 text-right font-semibold text-gray-900">Actions</TableHead>
+                  <TableHead className="w-[20%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">User</TableHead>
+                  <TableHead className="w-[12%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Area</TableHead>
+                  <TableHead className="w-[15%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Password</TableHead>
+                  <TableHead className="w-[15%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Contact</TableHead>
+                  <TableHead className="w-[8%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Status</TableHead>
+                  <TableHead className="w-[12%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Created</TableHead>
+                  <TableHead className="w-[18%] bg-white border-b-0 px-4 py-3 text-right font-semibold text-gray-900">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {usersLoading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="p-0">
-                      <LoadingTable columns={6} rows={7} className="border-0" />
+                    <TableCell colSpan={7} className="p-0">
+                      <LoadingTable columns={7} rows={7} className="border-0" />
                     </TableCell>
                   </TableRow>
                 ) : usersError ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="p-0">
+                    <TableCell colSpan={7} className="p-0">
                       <ErrorTable
-                        columns={6}
+                        columns={7}
                         message="Failed to load users"
                         description="There was an error loading the users. Please try again."
-                        onRetry={() => dispatch(fetchUsers())}
+                        onRetry={() => dispatch(fetchUsers({
+                          page: currentPage,
+                          search: debouncedSearchTerm,
+                          limit: 20
+                        }))}
                         className="border-0"
                       />
                     </TableCell>
                   </TableRow>
-                ) : filteredUsers.length === 0 ? (
+                ) : users?.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="p-0">
+                    <TableCell colSpan={7} className="p-0">
                       <EmptyTable
-                        columns={6}
+                        columns={7}
                         message={debouncedSearchTerm ? 'No users found' : 'No users yet'}
                         description={debouncedSearchTerm ? 'No users match your search criteria.' : 'Create your first user to get started.'}
                         className="border-0"
@@ -271,79 +260,95 @@ const UserManagement = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredUsers.map((user) => (
-                  <TableRow key={user._id}>
-                    <TableCell className="font-medium px-4 py-3">
-                      <div className="text-sm font-medium text-gray-900 truncate">
-                        {user.firstName} {user.lastName}
-                      </div>
-                    </TableCell>
+                  users?.map((user) => (
+                    <TableRow key={user._id}>
+                      <TableCell className="font-medium px-4 py-3">
+                        <div className="text-sm font-medium text-gray-900 truncate">
+                          {user.firstName} {user.lastName}
+                        </div>
+                      </TableCell>
 
-                    <TableCell className="px-4 py-3">
-                      {getRoleBadge(user.role)}
-                    </TableCell>
+                      <TableCell className="px-4 py-3">
+                        <div className="text-sm text-gray-900 truncate">
+                          {user.area?.name}
+                        </div>
+                      </TableCell>
 
-                    <TableCell className="px-4 py-3">
-                      <span className="text-sm text-gray-900 truncate">{user.email}</span>
-                    </TableCell>
+                      <TableCell className="px-4 py-3">
+                        <div className="text-sm text-gray-900 font-mono bg-gray-100 px-2 py-1 rounded">
+                          {user.password || user.tempPassword || 'Not Set'}
+                        </div>
+                      </TableCell>
 
-                    <TableCell className="px-4 py-3">
-                      {getStatusBadge(user.isActive, user._id)}
-                    </TableCell>
+                      <TableCell className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <Phone className="h-4 w-4 text-gray-500" />
+                          <span className="text-sm text-gray-900 truncate">+91 {user.phone}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-gray-500" />
+                          <span className="text-sm text-gray-900 truncate">{user.email}</span>
+                        </div>
+                      </TableCell>
 
-                    <TableCell className="px-4 py-3">
-                      <span className="text-sm text-gray-900 truncate">{user.createdAt}</span>
-                    </TableCell>
+                      <TableCell className="px-4 py-3">
+                        {getStatusBadge(user.isActive, user._id)}
+                      </TableCell>
 
-                    <TableCell className="text-right px-4 py-3">
-                      <div className="flex items-center justify-end space-x-0.5">
-                        {userToDelete && userToDelete._id === user._id ? (
-                          // Show confirmation buttons
-                          <>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={cancelDeleteUser}
-                              disabled={isDeleting}
-                              className="h-7 px-2 text-xs text-gray-600 hover:text-gray-900"
-                            >
-                              Cancel
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={confirmDeleteUser}
-                              disabled={isDeleting}
-                              className="h-7 px-2 text-xs bg-red-600 hover:bg-red-700 disabled:opacity-50"
-                            >
-                              {isDeleting ? 'Deleting...' : 'Delete'}
-                            </Button>
-                          </>
-                        ) : (
-                          // Show normal action buttons
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 w-7 p-0 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50"
-                              title="Edit user"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteUser(user)}
-                              className="h-7 w-7 p-0 text-red-600 hover:text-red-900 hover:bg-red-50"
-                              title="Delete user"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                      <TableCell className="px-4 py-3">
+                        <span className="text-sm text-gray-900 truncate">{formatDate(user.createdAt)}</span>
+                      </TableCell>
+
+                      <TableCell className="text-right px-4 py-3">
+                        <div className="flex items-center justify-end space-x-0.5">
+                          {userToDelete && userToDelete._id === user._id ? (
+                            // Show confirmation buttons
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={cancelDeleteUser}
+                                disabled={isDeleting}
+                                className="h-7 px-2 text-xs text-gray-600 hover:text-gray-900"
+                              >
+                                Cancel
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={confirmDeleteUser}
+                                disabled={isDeleting}
+                                className="h-7 px-2 text-xs bg-red-600 hover:bg-red-700 disabled:opacity-50"
+                              >
+                                {isDeleting ? 'Deleting...' : 'Delete'}
+                              </Button>
+                            </>
+                          ) : (
+                            // Show normal action buttons
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditUser(user)}
+                                className="h-7 w-7 p-0 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50"
+                                title="Edit user"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteUser(user)}
+                                className="h-7 w-7 p-0 text-red-600 hover:text-red-900 hover:bg-red-50"
+                                title="Delete user"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
                   ))
                 )}
               </TableBody>
@@ -353,7 +358,7 @@ const UserManagement = () => {
       </Card>
 
       {/* Pagination - Add when we have pagination data */}
-      {/* {pagination.totalPages > 1 && (
+      {pagination.totalPages > 1 && (
         <Card className="mt-6">
           <CardContent className="p-0">
             <Pagination
@@ -366,13 +371,21 @@ const UserManagement = () => {
             />
           </CardContent>
         </Card>
-      )} */}
+      )}
 
       {/* Add User Modal */}
       <AddUserModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSuccess={handleAddUser}
+      />
+
+      {/* Edit User Modal */}
+      <AddUserModal
+        isOpen={isEditModalOpen}
+        onClose={handleEditModalClose}
+        onSuccess={handleAddUser}
+        user={selectedUser}
       />
     </div>
   );

@@ -64,11 +64,11 @@ const Header = ({ user, onMenuClick }) => {
                 <span className="sr-only">Open user menu</span>
                 <div className="h-8 w-8 rounded-full bg-primary-600 flex items-center justify-center">
                   <span className="text-sm font-medium text-white">
-                    {user.firstName?.charAt(0)}{user.lastName?.charAt(0)}
+                    {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
                   </span>
                 </div>
                 <span className="ml-3 text-gray-700 font-medium hidden sm:block">
-                  {user.firstName} {user.lastName}
+                  {user?.firstName} {user?.lastName}
                 </span>
               </button>
 
@@ -76,9 +76,9 @@ const Header = ({ user, onMenuClick }) => {
               {userMenuOpen && (
                 <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
                   <div className="px-4 py-2 text-sm text-gray-700 border-b border-gray-100">
-                    <div className="font-medium">{user.firstName} {user.lastName}</div>
-                    <div className="text-gray-500">{user.email}</div>
-                    <div className="text-gray-500 capitalize">{user.role}</div>
+                    <div className="font-medium">{user?.firstName} {user?.lastName}</div>
+                    <div className="text-gray-500">{user?.email}</div>
+                    <div className="text-gray-500 capitalize">{user?.role}</div>
                   </div>
 
                   <button
