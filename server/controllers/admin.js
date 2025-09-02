@@ -7,10 +7,10 @@ const generateReadablePassword = () => {
   const adjectives = ['Happy', 'Bright', 'Quick', 'Smart', 'Strong', 'Fast', 'Cool', 'Wise'];
   const nouns = ['User', 'Star', 'Hero', 'Tiger', 'Eagle', 'Lion', 'Bear', 'Wolf'];
   const numbers = Math.floor(Math.random() * 999) + 100; // 3-digit number
-  
+
   const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
   const noun = nouns[Math.floor(Math.random() * nouns.length)];
-  
+
   return `${adjective}${noun}${numbers}`;
 };
 
@@ -21,7 +21,7 @@ const getDashboard = async (req, res) => {
     const totalSalesmen = await User.countDocuments({ role: 'salesman', isActive: true });
     const totalClients = await Client.countDocuments({ isActive: true });
     const totalAreas = await Area.countDocuments({ isActive: true });
-    
+
     const recentSalesmen = await User.find({ role: 'salesman' })
       .select('firstName lastName email area lastLogin phone')
       .populate('area', 'name city')
@@ -70,7 +70,7 @@ const createUser = async (req, res) => {
 
     // Generate a readable temporary password
     const tempPassword = generateReadablePassword();
-    
+
     // Create new user
     const user = new User({
       email,
@@ -104,10 +104,13 @@ const createUser = async (req, res) => {
 const getUsers = async (req, res) => {
   try {
     const { role, area, search, page = 1, limit = 10 } = req.query;
-    
-    let query = {role: 'salesman'};
-    
-    if (role) query.role = role;
+
+    let query = {};
+
+    if (!role) {
+      query.role = 'salesman';
+    }
+
     if (area) query.area = area;
     if (search) {
       query.$or = [
@@ -183,9 +186,9 @@ const updateUser = async (req, res) => {
 const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const user = await User.findById(id);
-    
+
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -193,7 +196,7 @@ const deleteUser = async (req, res) => {
     // Hard delete - permanently remove from database
     await User.findByIdAndDelete(id);
 
-    res.json({ 
+    res.json({
       message: 'User deleted successfully',
       data: { id: user._id, name: `${user.firstName} ${user.lastName}` }
     });
@@ -208,9 +211,9 @@ const deleteUser = async (req, res) => {
 const toggleUserStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const user = await User.findById(id);
-    
+
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }

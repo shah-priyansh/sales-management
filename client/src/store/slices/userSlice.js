@@ -5,10 +5,15 @@ import apiClient from '../../utils/axiosConfig';
 // Async thunks for API calls
 export const fetchUsers = createAsyncThunk('users/fetchUsers', async (params = {}, { rejectWithValue }) => {
   try {
-    const { page = 1, search = '', limit = 20 } = params;
-    const response = await apiClient.get(`/admin/users?page=${page}&search=${search}&limit=${limit}`);
+    const { page = 1, search = '', area = '', limit = 20 } = params;
+    let url = `/admin/users?page=${page}&search=${search}&limit=${limit}`;
+    if (area) {
+      url += `&area=${area}`;
+    }
+    const response = await apiClient.get(url);
     return response.data;
   } catch (error) {
+    console.error('API Error:', error);
     return rejectWithValue(error.response?.data?.message || 'Failed to fetch users');
   }
 });

@@ -1,4 +1,4 @@
-import { Edit, Mail, Phone, Plus, Trash2, User } from 'lucide-react';
+import { Edit, Mail, Phone, Plus, Trash2, User, Filter, Search, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
@@ -12,8 +12,9 @@ import {
   toggleUserStatus,
   updateUserFetch
 } from '../../store/slices/userSlice';
+import { fetchAreas, selectAreas, selectAreasLoading } from '../../store/slices/areaSlice';
 import { formatDate } from '../../utils/authUtils';
-import { Badge, Button, Card, CardContent, EmptyTable, ErrorTable, LoadingTable, Pagination, SearchInput, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui';
+import { Badge, Button, Card, CardContent, EmptyTable, ErrorTable, LoadingTable, Pagination, SearchInput, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui';
 import AddUserModal from './AddEmployeeModal';
 
 const UserManagement = () => {
@@ -22,6 +23,9 @@ const UserManagement = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [selectedAreaFilter, setSelectedAreaFilter] = useState('all');
+  const [areaSearchTerm, setAreaSearchTerm] = useState('');
+  const [debouncedAreaSearch, setDebouncedAreaSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [isSearching, setIsSearching] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
@@ -31,6 +35,8 @@ const UserManagement = () => {
   const pagination = useSelector(selectUsersPagination);
   const usersLoading = useSelector(selectUsersLoading);
   const usersError = useSelector(selectUsersError);
+  const areas = useSelector(selectAreas);
+  const areasLoading = useSelector(selectAreasLoading);
 
   // Debounced search effect
   useEffect(() => {
@@ -55,14 +61,44 @@ const UserManagement = () => {
     }
   }, [debouncedSearchTerm, searchTerm]);
 
-  // Fetch users on component mount and when search changes
+  // Fetch areas on component mount
   useEffect(() => {
-    dispatch(fetchUsers({
+    if (areas.length === 0) {
+      dispatch(fetchAreas({ page: 1, limit: 100 }));
+    }
+  }, [dispatch, areas.length]);
+
+  // Debounced search for areas
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedAreaSearch(areaSearchTerm);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [areaSearchTerm]);
+
+  // Filter areas based on search term
+  const filteredAreas = areas.filter(area => {
+    if (!debouncedAreaSearch) return true;
+    const searchLower = debouncedAreaSearch.toLowerCase();
+    return (
+      area.name.toLowerCase().includes(searchLower) ||
+      area.city.toLowerCase().includes(searchLower) ||
+      area.state.toLowerCase().includes(searchLower)
+    );
+  });
+
+  // Fetch users on component mount and when search/area filter changes
+  useEffect(() => {
+    const params = {
       page: currentPage,
       search: debouncedSearchTerm,
+      area: selectedAreaFilter === 'all' ? '' : selectedAreaFilter,
       limit: 20
-    }));
-  }, [dispatch, currentPage, debouncedSearchTerm]);
+    };
+    console.log('Fetching users with params:', params);
+    dispatch(fetchUsers(params));
+  }, [dispatch, currentPage, debouncedSearchTerm, selectedAreaFilter]);
 
   console.log(users);
 
@@ -100,6 +136,7 @@ const UserManagement = () => {
           dispatch(fetchUsers({
             page: currentPage,
             search: debouncedSearchTerm,
+            area: selectedAreaFilter === 'all' ? '' : selectedAreaFilter,
             limit: 20
           }));
         } else {
@@ -124,6 +161,18 @@ const UserManagement = () => {
   const handleClearSearch = () => {
     setSearchTerm('');
     setDebouncedSearchTerm('');
+    setCurrentPage(1);
+  };
+
+  const handleAreaFilterChange = (areaId) => {
+    setSelectedAreaFilter(areaId);
+    setCurrentPage(1);
+  };
+
+  const handleClearAreaFilter = () => {
+    setSelectedAreaFilter('all');
+    setAreaSearchTerm('');
+    setDebouncedAreaSearch('');
     setCurrentPage(1);
   };
 
@@ -189,14 +238,77 @@ const UserManagement = () => {
       <Card className="mb-6">
         <CardContent className="p-4 md:p-6">
           <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between">
-            <SearchInput
-              value={searchTerm}
-              onChange={setSearchTerm}
-              onClear={handleClearSearch}
-              placeholder="Search users..."
-              loading={usersLoading}
-              searching={isSearching}
-            />
+            <div className="flex flex-col sm:flex-row gap-4 flex-1">
+              <SearchInput
+                value={searchTerm}
+                onChange={setSearchTerm}
+                onClear={handleClearSearch}
+                placeholder="Search users..."
+                loading={usersLoading}
+                searching={isSearching}
+              />
+              <div className="flex items-center gap-2">
+                <Select
+                  value={selectedAreaFilter}
+                  onValueChange={handleAreaFilterChange}
+                  disabled={areasLoading}
+                >
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Filter by area..." />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px]" position="popper" side="bottom" align="start">
+                    {/* Search Input */}
+                    <div className="p-2 border-b">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <input
+                          type="text"
+                          placeholder="Search areas..."
+                          value={areaSearchTerm}
+                          onChange={(e) => setAreaSearchTerm(e.target.value)}
+                          className="w-full pl-10 pr-10 h-8 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                        {areaSearchTerm && (
+                          <button
+                            type="button"
+                            onClick={() => setAreaSearchTerm('')}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Area Options */}
+                    <div className="max-h-[200px] overflow-y-auto">
+                      <SelectItem value="all">All Areas</SelectItem>
+                      {filteredAreas.length > 0 ? (
+                        filteredAreas.map((area) => (
+                          <SelectItem key={area._id} value={area._id}>
+                            {area.name} - {area.city}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <div className="p-3 text-center text-sm text-gray-500">
+                          {areasLoading ? 'Loading areas...' : 'No areas found'}
+                        </div>
+                      )}
+                    </div>
+                  </SelectContent>
+                </Select>
+                {selectedAreaFilter && selectedAreaFilter !== 'all' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleClearAreaFilter}
+                    className="h-9 px-2"
+                  >
+                    Clear
+                  </Button>
+                )}
+              </div>
+            </div>
             <Button
               onClick={() => setIsAddModalOpen(true)}
               variant="gradient"
@@ -242,6 +354,7 @@ const UserManagement = () => {
                         onRetry={() => dispatch(fetchUsers({
                           page: currentPage,
                           search: debouncedSearchTerm,
+                          area: selectedAreaFilter === 'all' ? '' : selectedAreaFilter,
                           limit: 20
                         }))}
                         className="border-0"
