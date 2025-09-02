@@ -7,8 +7,8 @@ const Sidebar = ({ open, setOpen }) => {
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
-    { name: 'Employees', href: '/employees', icon: Users, adminOnly: true },
     { name: 'Clients', href: '/clients', icon: UserCheck, adminOnly: true },
+    { name: 'Employees', href: '/employees', icon: Users, adminOnly: true },
     { name: 'Areas', href: '/areas', icon: MapPin, adminOnly: true },
   ];
 

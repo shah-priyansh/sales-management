@@ -13,7 +13,6 @@ export const fetchUsers = createAsyncThunk('users/fetchUsers', async (params = {
     const response = await apiClient.get(url);
     return response.data;
   } catch (error) {
-    console.error('API Error:', error);
     return rejectWithValue(error.response?.data?.message || 'Failed to fetch users');
   }
 });
@@ -123,9 +122,9 @@ const userSlice = createSlice({
       })
       .addCase(toggleUserStatusFetch.fulfilled, (state, action) => {
         state.loading = false;
-        const user = state.users.find(u => u._id === action.payload._id);
+        const user = state.users.find(u => u._id === action.payload.data._id);
         if (user) {
-          user.isActive = action.payload.isActive;
+          user.isActive = action.payload.data.isActive;
         }
       })
       .addCase(toggleUserStatusFetch.rejected, (state, action) => {

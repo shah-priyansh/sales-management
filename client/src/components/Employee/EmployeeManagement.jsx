@@ -9,12 +9,12 @@ import {
   selectUsersError,
   selectUsersLoading,
   selectUsersPagination,
-  toggleUserStatus,
+  toggleUserStatusFetch,
   updateUserFetch
 } from '../../store/slices/userSlice';
 import { fetchAreas, selectAreas, selectAreasLoading } from '../../store/slices/areaSlice';
 import { formatDate } from '../../utils/authUtils';
-import { Badge, Button, Card, CardContent, EmptyTable, ErrorTable, LoadingTable, Pagination, SearchInput, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui';
+import { Badge, Button, Card, CardContent, EmptyTable, ErrorTable, LoadingTable, Pagination, SearchInput, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Switch, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui';
 import AddUserModal from './AddEmployeeModal';
 
 const UserManagement = () => {
@@ -90,17 +90,13 @@ const UserManagement = () => {
 
   // Fetch users on component mount and when search/area filter changes
   useEffect(() => {
-    const params = {
+    dispatch(fetchUsers({
       page: currentPage,
       search: debouncedSearchTerm,
       area: selectedAreaFilter === 'all' ? '' : selectedAreaFilter,
       limit: 20
-    };
-    console.log('Fetching users with params:', params);
-    dispatch(fetchUsers(params));
+    }));
   }, [dispatch, currentPage, debouncedSearchTerm, selectedAreaFilter]);
-
-  console.log(users);
 
   const handleAddUser = (userData) => {
     // User is already added to Redux store via createUserFetch.fulfilled
@@ -176,20 +172,29 @@ const UserManagement = () => {
     setCurrentPage(1);
   };
 
-  const handleToggleStatus = (userId) => {
-    dispatch(toggleUserStatus(userId));
+  const handleToggleStatus = async (userId) => {
+    try {
+      const result = await dispatch(toggleUserStatusFetch(userId)).unwrap();
+      toast.success(result.message);
+      // No need to refetch - Redux store is already updated
+    } catch (error) {
+      toast.error(typeof error === 'string' ? error : 'Failed to update user status');
+    }
   };
 
 
-  const getStatusBadge = (isActive, userId) => {
+  const getStatusSwitch = (isActive, userId) => {
     return (
-      <Badge
-        variant={isActive ? "success" : "secondary"}
-        className="cursor-pointer hover:opacity-80"
-        onClick={() => handleToggleStatus(userId)}
-      >
-        {isActive ? 'Active' : 'Inactive'}
-      </Badge>
+      <div className="flex items-center gap-2">
+        <Switch
+          checked={isActive}
+          onCheckedChange={() => handleToggleStatus(userId)}
+          disabled={usersLoading}
+        />
+        <Badge variant={isActive ? "success" : "destructive"}>
+          {isActive ? 'Active' : 'Inactive'}
+        </Badge>
+      </div>
     );
   };
 
@@ -227,7 +232,22 @@ const UserManagement = () => {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Active Users</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {pagination?.total - users?.filter(u => u.isActive).length}
+                  { users?.filter(u => u.isActive).length}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <div className="p-3 bg-green-100 rounded-lg">
+                <User className="h-6 w-6 text-green-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Inactive Users</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {users?.filter(u => !u.isActive).length}
                 </p>
               </div>
             </div>
@@ -332,7 +352,7 @@ const UserManagement = () => {
                   <TableHead className="w-[12%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Area</TableHead>
                   <TableHead className="w-[15%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Password</TableHead>
                   <TableHead className="w-[15%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Contact</TableHead>
-                  <TableHead className="w-[8%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Status</TableHead>
+                  <TableHead className="w-[15%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Status</TableHead>
                   <TableHead className="w-[12%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Created</TableHead>
                   <TableHead className="w-[18%] bg-white border-b-0 px-4 py-3 text-right font-semibold text-gray-900">Actions</TableHead>
                 </TableRow>
@@ -405,7 +425,7 @@ const UserManagement = () => {
                       </TableCell>
 
                       <TableCell className="px-4 py-3">
-                        {getStatusBadge(user.isActive, user._id)}
+                        {getStatusSwitch(user.isActive, user._id)}
                       </TableCell>
 
                       <TableCell className="px-4 py-3">
