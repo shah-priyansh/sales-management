@@ -218,8 +218,8 @@ const AreaManagement = () => {
               <TableHeader className="sticky top-0 bg-white z-30 shadow-lg border-b-2 border-gray-200">
                 <TableRow className="bg-white hover:bg-white">
                   <TableHead className="w-[25%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Area</TableHead>
-                  <TableHead className="w-[15%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">State</TableHead>
                   <TableHead className="w-[15%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">City</TableHead>
+                  <TableHead className="w-[15%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">State</TableHead>
                   <TableHead className="w-[10%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Status</TableHead>
                   <TableHead className="w-[20%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Created</TableHead>
                   <TableHead className="w-[15%] bg-white border-b-0 px-4 py-3 text-right font-semibold text-gray-900">Actions</TableHead>
@@ -265,12 +265,12 @@ const AreaManagement = () => {
                       </TableCell>
 
                       <TableCell className="px-4 py-3">
+                        <span className="text-sm text-gray-900 truncate">{area.city}</span>
+                      </TableCell>
+                      <TableCell className="px-4 py-3">
                         <span className="text-sm text-gray-900 truncate">{area.state}</span>
                       </TableCell>
 
-                      <TableCell className="px-4 py-3">
-                        <span className="text-sm text-gray-900 truncate">{area.city}</span>
-                      </TableCell>
 
                       <TableCell className="px-4 py-3">
                         {getStatusBadge(area.isActive, area._id)}

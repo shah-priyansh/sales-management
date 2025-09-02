@@ -23,7 +23,6 @@ router.post('/', [
   body('address.city').optional().trim(),
   body('address.state').optional().trim(),
   body('address.zipCode').optional().trim(),
-  body('status').optional().isIn(['active', 'inactive', 'prospect', 'customer']).withMessage('Invalid status'),
   body('notes').optional().trim()
 ], createClient);
 

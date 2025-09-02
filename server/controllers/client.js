@@ -12,20 +12,12 @@ const createClient = async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { name, company, email, phone, address, area, status, notes, assignedSalesman } = req.body;
+    const { name, company, email, phone, address, area, status, notes } = req.body;
 
     // Check if area exists
     const areaExists = await Area.findById(area);
     if (!areaExists) {
       return res.status(400).json({ message: 'Area not found' });
-    }
-
-    // Check if assigned salesman exists and is active
-    if (assignedSalesman) {
-      const salesmanExists = await User.findById(assignedSalesman);
-      if (!salesmanExists || salesmanExists.role !== 'salesman' || !salesmanExists.isActive) {
-        return res.status(400).json({ message: 'Invalid salesman assignment' });
-      }
     }
 
     const client = new Client({
@@ -35,16 +27,13 @@ const createClient = async (req, res) => {
       phone,
       address,
       area,
-      status,
       notes,
-      assignedSalesman
     });
 
     await client.save();
 
     const clientResponse = await Client.findById(client._id)
       .populate('area', 'name city state')
-      .populate('assignedSalesman', 'firstName lastName');
 
     res.status(201).json(clientResponse);
   } catch (error) {
@@ -59,11 +48,12 @@ const getClients = async (req, res) => {
   try {
     const { area, status, search, page = 1, limit = 20 } = req.query;
     
-    let query = { isActive: true };
+    let query = {  };
     
     // If salesman, only show clients from their area
     if (req.user?.role === 'salesman') {
       query.area = req.user.area;
+      query.isActive = true;
     } else if (area) {
       query.area = area;
     }
@@ -80,7 +70,6 @@ const getClients = async (req, res) => {
 
     const clients = await Client.find(query)
       .populate('area', 'name city state')
-      .populate('assignedSalesman', 'firstName lastName')
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
@@ -114,7 +103,6 @@ const getClientById = async (req, res) => {
 
     const client = await Client.findOne(query)
       .populate('area', 'name city state')
-      .populate('assignedSalesman', 'firstName lastName');
 
     if (!client) {
       return res.status(404).json({ message: 'Client not found' });
@@ -147,20 +135,12 @@ const updateClient = async (req, res) => {
       }
     }
 
-    // Check if assigned salesman exists and is active
-    if (updateData.assignedSalesman) {
-      const salesmanExists = await User.findById(updateData.assignedSalesman);
-      if (!salesmanExists || salesmanExists.role !== 'salesman' || !salesmanExists.isActive) {
-        return res.status(400).json({ message: 'Invalid salesman assignment' });
-      }
-    }
 
     const client = await Client.findByIdAndUpdate(
       id,
       updateData,
       { new: true, runValidators: true }
     ).populate('area', 'name city state')
-     .populate('assignedSalesman', 'firstName lastName');
 
     if (!client) {
       return res.status(404).json({ message: 'Client not found' });
@@ -216,10 +196,8 @@ const assignSalesman = async (req, res) => {
 
     const client = await Client.findByIdAndUpdate(
       id,
-      { assignedSalesman: salesmanId },
       { new: true }
     ).populate('area', 'name city state')
-     .populate('assignedSalesman', 'firstName lastName');
 
     if (!client) {
       return res.status(404).json({ message: 'Client not found' });

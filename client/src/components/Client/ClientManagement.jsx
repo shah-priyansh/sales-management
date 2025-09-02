@@ -203,9 +203,9 @@ const ClientManagement = () => {
           onCheckedChange={() => handleToggleStatus(clientId)}
           disabled={clientsLoading}
         />
-        <span className="text-sm text-gray-600">
+        <Badge variant={isActive ? "success" : "destructive"}>
           {isActive ? 'Active' : 'Inactive'}
-        </span>
+        </Badge>
       </div>
     );
   };
@@ -273,9 +273,9 @@ const ClientManagement = () => {
                 <Building2 className="h-6 w-6 text-purple-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Customers</p>
+                <p className="text-sm font-medium text-gray-600">Inactive clients</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {clients?.filter(c => c.status === 'customer').length}
+                  {clients?.filter(c => !c.isActive).length}
                 </p>
               </div>
             </div>
@@ -296,7 +296,6 @@ const ClientManagement = () => {
                 searching={isSearching}
               />
               <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-gray-500" />
                 <Select
                   value={selectedAreaFilter}
                   onValueChange={handleAreaFilterChange}
@@ -357,33 +356,6 @@ const ClientManagement = () => {
                   </Button>
                 )}
               </div>
-              <div className="flex items-center gap-2">
-                <Select
-                  value={selectedStatusFilter}
-                  onValueChange={handleStatusFilterChange}
-                >
-                  <SelectTrigger className="w-[150px]">
-                    <SelectValue placeholder="Status..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="prospect">Prospect</SelectItem>
-                    <SelectItem value="customer">Customer</SelectItem>
-                  </SelectContent>
-                </Select>
-                {selectedStatusFilter && selectedStatusFilter !== 'all' && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleClearStatusFilter}
-                    className="h-9 px-2"
-                  >
-                    Clear
-                  </Button>
-                )}
-              </div>
             </div>
             <Button
               onClick={() => setIsAddModalOpen(true)}
@@ -405,10 +377,10 @@ const ClientManagement = () => {
               <TableHeader className="sticky top-0 bg-white z-30 shadow-lg border-b-2 border-gray-200">
                 <TableRow className="bg-white hover:bg-white">
                   <TableHead className="w-[20%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Client</TableHead>
+                  <TableHead className="w-[12%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">City</TableHead>
                   <TableHead className="w-[12%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Area</TableHead>
                   <TableHead className="w-[15%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Contact</TableHead>
                   <TableHead className="w-[10%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Status</TableHead>
-                  <TableHead className="w-[8%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Active</TableHead>
                   <TableHead className="w-[12%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Created</TableHead>
                   <TableHead className="w-[23%] bg-white border-b-0 px-4 py-3 text-right font-semibold text-gray-900">Actions</TableHead>
                 </TableRow>
@@ -465,6 +437,12 @@ const ClientManagement = () => {
 
                       <TableCell className="px-4 py-3">
                         <div className="text-sm text-gray-900 truncate">
+                          {client.area?.city}
+                        </div>
+                      </TableCell>
+
+                      <TableCell className="px-4 py-3">
+                        <div className="text-sm text-gray-900 truncate">
                           {client.area?.name}
                         </div>
                       </TableCell>
@@ -482,9 +460,7 @@ const ClientManagement = () => {
                         )}
                       </TableCell>
 
-                      <TableCell className="px-4 py-3">
-                        {getStatusBadge(client.status)}
-                      </TableCell>
+               
 
                       <TableCell className="px-4 py-3">
                         {getStatusSwitch(client.isActive, client._id)}

@@ -232,7 +232,7 @@ const UserManagement = () => {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Active Users</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  { users?.filter(u => u.isActive).length}
+                  {users?.filter(u => u.isActive).length}
                 </p>
               </div>
             </div>
@@ -299,7 +299,7 @@ const UserManagement = () => {
                         )}
                       </div>
                     </div>
-                    
+
                     {/* Area Options */}
                     <div className="max-h-[200px] overflow-y-auto">
                       <SelectItem value="all">All Areas</SelectItem>
@@ -402,8 +402,13 @@ const UserManagement = () => {
                       </TableCell>
 
                       <TableCell className="px-4 py-3">
-                        <div className="text-sm text-gray-900 truncate">
-                          {user.area?.name}
+                        <div className="flex flex-col items-left gap-2">
+                          <div className=" text-gray-900 font-medium truncate">
+                            {user.area?.name}
+                          </div>
+                          <div className="text-sm text-gray-500 truncate">
+                            {user.area?.city}, {user.area?.state}
+                          </div>
                         </div>
                       </TableCell>
 
@@ -491,20 +496,22 @@ const UserManagement = () => {
       </Card>
 
       {/* Pagination - Add when we have pagination data */}
-      {pagination.totalPages > 1 && (
-        <Card className="mt-4">
-          <CardContent className="p-0">
-            <Pagination
-              currentPage={pagination.currentPage}
-              totalPages={pagination.totalPages}
-              total={pagination.total}
-              limit={pagination.limit}
-              onPageChange={setCurrentPage}
-              loading={usersLoading}
-            />
-          </CardContent>
-        </Card>
-      )}
+      {
+        pagination.totalPages > 1 && (
+          <Card className="mt-4">
+            <CardContent className="p-0">
+              <Pagination
+                currentPage={pagination.currentPage}
+                totalPages={pagination.totalPages}
+                total={pagination.total}
+                limit={pagination.limit}
+                onPageChange={setCurrentPage}
+                loading={usersLoading}
+              />
+            </CardContent>
+          </Card>
+        )
+      }
 
       {/* Add User Modal */}
       <AddUserModal
@@ -520,7 +527,7 @@ const UserManagement = () => {
         onSuccess={handleAddUser}
         user={selectedUser}
       />
-    </div>
+    </div >
   );
 };
 
