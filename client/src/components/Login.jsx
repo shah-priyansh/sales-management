@@ -47,15 +47,15 @@ const Login = () => {
           <div className="space-y-4">
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-                Username or Email
+           Email
               </label>
               <div className="mt-1 relative">
                 <Input
                   id="username"
                   type="text"
-                  {...register('username', { required: 'Username or email is required' })}
+                  {...register('username', { required: 'Email is required' })}
                   className="input-field pl-10"
-                  placeholder="Enter username or email"
+                  placeholder="Enter email"
                 />
                 <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
               </div>
@@ -104,6 +104,7 @@ const Login = () => {
           <div>
             <Button
               disabled={loading}
+              variant="gradient"
               className="btn-primary w-full flex justify-center items-center"
             >
               {loading ? (
