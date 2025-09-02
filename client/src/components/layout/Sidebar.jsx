@@ -56,7 +56,7 @@ const Sidebar = ({ open, setOpen }) => {
                     onClick={() => setOpen(false)}
                     className={`group flex items-center px-3 py-2 text-base font-medium rounded-lg transition-all duration-200 ${
                       isActive(item.href)
-                        ? 'bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 shadow-sm border-l-4 border-blue-400'
+                        ? 'text-blue-600 border-l-4 border-blue-500'
                         : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 hover:shadow-sm'
                     }`}
                   >
@@ -102,7 +102,7 @@ const Sidebar = ({ open, setOpen }) => {
                     to={item.href}
                     className={`group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
                       isActive(item.href)
-                        ? 'bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 shadow-sm border-l-4 border-blue-400'
+                        ? 'text-blue-600 border-l-4 border-blue-500'
                         : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 hover:shadow-sm'
                     }`}
                   >
