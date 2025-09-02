@@ -1,16 +1,15 @@
-import { Building2, Edit, MapPin, Plus, Trash2, AlertTriangle } from 'lucide-react';
+import { Building2, Edit, MapPin, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
 import { deleteAreaFetch, fetchAreas, selectAreas, selectAreasError, selectAreasLoading, selectAreasPagination, toggleAreaStatus } from '../../store/slices/areaSlice';
 import { formatDate } from '../../utils/authUtils';
-import { Badge, Button, Card, CardContent, EmptyTable, ErrorTable, LoadingTable, Pagination, SearchInput, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui';
+import { Badge, Button, Card, CardContent, EmptyTable, ErrorTable, LoadingTable, Pagination, SearchInput, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui';
 import AddAreaModal from './AddAreaModal';
 
 const AreaManagement = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedArea, setSelectedArea] = useState(null);
   const [areaToDelete, setAreaToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -77,7 +76,6 @@ const AreaManagement = () => {
 
   const handleDeleteArea = (area) => {
     setAreaToDelete(area);
-    setIsDeleteModalOpen(true);
   };
 
   const confirmDeleteArea = async () => {
@@ -88,7 +86,6 @@ const AreaManagement = () => {
         if (deleteAreaFetch.fulfilled.match(result)) {
           // Success - area deleted
           toast.success(`Area "${areaToDelete.name}" deleted successfully`);
-          setIsDeleteModalOpen(false);
           setAreaToDelete(null);
           
           // Refetch areas to update the total count and pagination
@@ -112,7 +109,6 @@ const AreaManagement = () => {
   };
 
   const cancelDeleteArea = () => {
-    setIsDeleteModalOpen(false);
     setAreaToDelete(null);
     setIsDeleting(false);
   };
@@ -287,25 +283,51 @@ const AreaManagement = () => {
 
                       <TableCell className="text-right px-4 py-3">
                         <div className="flex items-center justify-end space-x-0.5">
-
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEditArea(area)}
-                            className="h-7 w-7 p-0 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50"
-                            title="Edit area"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteArea(area)}
-                            className="h-7 w-7 p-0 text-red-600 hover:text-red-900 hover:bg-red-50"
-                            title="Delete area"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          {areaToDelete && areaToDelete._id === area._id ? (
+                            // Show confirmation buttons
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={cancelDeleteArea}
+                                disabled={isDeleting}
+                                className="h-7 px-2 text-xs text-gray-600 hover:text-gray-900"
+                              >
+                                Cancel
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={confirmDeleteArea}
+                                disabled={isDeleting}
+                                className="h-7 px-2 text-xs bg-red-600 hover:bg-red-700 disabled:opacity-50"
+                              >
+                                {isDeleting ? 'Deleting...' : 'Delete'}
+                              </Button>
+                            </>
+                          ) : (
+                            // Show normal action buttons
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditArea(area)}
+                                className="h-7 w-7 p-0 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50"
+                                title="Edit area"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteArea(area)}
+                                className="h-7 w-7 p-0 text-red-600 hover:text-red-900 hover:bg-red-50"
+                                title="Delete area"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -345,65 +367,7 @@ const AreaManagement = () => {
         area={selectedArea}
       />
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-red-100 rounded-lg">
-                <AlertTriangle className="h-5 w-5 text-red-600" />
-              </div>
-              <div>
-                <DialogTitle>Delete Area</DialogTitle>
-                <DialogDescription>
-                  This action cannot be undone. This will permanently delete the area.
-                </DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
 
-          {areaToDelete && (
-            <div className="py-4">
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="font-medium text-gray-900 mb-2">Area Details:</h4>
-                <div className="space-y-1 text-sm text-gray-600">
-                  <p><span className="font-medium">Name:</span> {areaToDelete.name}</p>
-                  <p><span className="font-medium">State:</span> {areaToDelete.state}</p>
-                  <p><span className="font-medium">City:</span> {areaToDelete.city}</p>
-                  <p><span className="font-medium">Status:</span> 
-                    <span className={`ml-1 px-2 py-1 rounded-full text-xs ${
-                      areaToDelete.isActive 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {areaToDelete.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <DialogFooter className="pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={cancelDeleteArea}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={confirmDeleteArea}
-              disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isDeleting ? 'Deleting...' : 'Delete Area'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
