@@ -32,7 +32,6 @@ const login = async (req, res) => {
 
         // Update last login
         user.lastLogin = new Date();
-        console.log('user', user);
         await user.save();
 
         // Generate token

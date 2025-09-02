@@ -211,12 +211,10 @@ const deleteUser = async (req, res) => {
 const toggleUserStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log('Toggling status for user ID:', id);
 
     const user = await User.findById(id);
 
     if (!user) {
-      console.log('User not found with ID:', id);
       return res.status(404).json({ message: 'User not found' });
     }
 
@@ -224,7 +222,6 @@ const toggleUserStatus = async (req, res) => {
     user.isActive = !user.isActive;
     await user.save();
 
-    console.log(`User ${user.firstName} ${user.lastName} status changed from ${previousStatus} to ${user.isActive}`);
 
     res.json({
       message: `User ${user.isActive ? 'activated' : 'deactivated'} successfully`,

@@ -13,7 +13,6 @@ mongoose.connect(process.env.MONGODB_URI, {
 
 async function createAdminUser() {
   try {
-    console.log('Creating admin user...');
 
     // Check if admin already exists
     const existingAdmin = await User.findOne({ email: 'admin@gmail.com' });

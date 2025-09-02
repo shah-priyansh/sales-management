@@ -134,12 +134,10 @@ const AddAreaModal = ({ isOpen, onClose, area = null }) => {
   const isGujarat = states.find(state => state._id === selectedState)?.name?.toLowerCase() === 'gujarat';
 
   const onSubmit = async (data) => {
-    console.log('Form submitted with data:', data);
 
     // Get state and city names for the form data
     const selectedStateData = states.find(state => state._id === data.state);
     const selectedCityData = cities.find(city => city._id === data.city);
-    console.log('Selected state data:', selectedStateData);
     
     const formData = {
       ...data,

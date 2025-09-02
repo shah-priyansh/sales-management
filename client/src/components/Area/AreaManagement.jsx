@@ -54,7 +54,6 @@ const AreaManagement = () => {
   }, [dispatch, currentPage, debouncedSearchTerm]);
 
   const handleAddAreaSuccess = () => {
-    console.log('Area created successfully via API');
     setIsAddModalOpen(false);
   };
 

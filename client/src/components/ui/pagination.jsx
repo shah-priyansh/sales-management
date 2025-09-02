@@ -12,7 +12,6 @@ const Pagination = ({
   loading = false,
   className = ""
 }) => {
-    console.log(totalPages,loading);
   const startItem = (currentPage - 1) * limit + 1;
   const endItem = Math.min(currentPage * limit, total);
 
