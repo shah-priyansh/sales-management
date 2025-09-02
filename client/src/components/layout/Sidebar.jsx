@@ -54,17 +54,17 @@ const Sidebar = ({ open, setOpen }) => {
                     key={item.name}
                     to={item.href}
                     onClick={() => setOpen(false)}
-                    className={`group flex items-center px-2 py-2 text-base font-medium rounded-md ${
+                    className={`group flex items-center px-3 py-2 text-base font-medium rounded-lg transition-all duration-200 ${
                       isActive(item.href)
-                        ? 'bg-primary-100 text-primary-900'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                        ? 'bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 shadow-sm border-l-4 border-blue-400'
+                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 hover:shadow-sm'
                     }`}
                   >
                     <item.icon
                       className={`mr-4 h-6 w-6 ${
                         isActive(item.href)
-                          ? 'text-primary-500'
-                          : 'text-gray-400 group-hover:text-gray-500'
+                          ? 'text-blue-600'
+                          : 'text-gray-400 group-hover:text-gray-600'
                       }`}
                     />
                     {item.name}
@@ -100,17 +100,17 @@ const Sidebar = ({ open, setOpen }) => {
                   <NavLink
                     key={item.name}
                     to={item.href}
-                    className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
+                    className={`group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
                       isActive(item.href)
-                        ? 'bg-primary-100 text-primary-900'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                        ? 'bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 shadow-sm border-l-4 border-blue-400'
+                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 hover:shadow-sm'
                     }`}
                   >
                     <item.icon
                       className={`mr-3 h-5 w-5 ${
                         isActive(item.href)
-                          ? 'text-primary-500'
-                          : 'text-gray-400 group-hover:text-gray-500'
+                          ? 'text-blue-600'
+                          : 'text-gray-400 group-hover:text-gray-600'
                       }`}
                     />
                     {item.name}
