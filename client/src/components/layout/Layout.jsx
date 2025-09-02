@@ -11,19 +11,17 @@ const Layout = () => {
   const user = useSelector(selectUser);
 
   return (
-    <div className="h-screen flex overflow-hidden bg-gray-100">
-      {/* Sidebar */}
+    <div className="h-screen flex bg-gray-100">
       <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
       
-      <div className="flex-1  focus:outline-none">
-        <Header 
-          user={user} 
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <Header
+          user={user}
           onMenuClick={() => setSidebarOpen(true)}
         />
         
-        {/* Page content */}
-        <main className="flex-1 relative z-0 overflow-y-auto">
-          <div className="mx-auto px-4 sm:px-6 md:px-8 py-6">
+        <main className="flex-1 overflow-y-auto">
+          <div className="px-4 sm:px-6 md:px-8 py-6 max-w-full">
             <Outlet />
           </div>
         </main>

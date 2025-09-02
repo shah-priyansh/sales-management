@@ -3,7 +3,6 @@ import { Toaster } from 'react-hot-toast';
 import { Provider, useDispatch } from 'react-redux';
 import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import { AreaManagement } from './components/Area';
-import Clients from './components/Client';
 import Dashboard from './components/Dashboard';
 import Login from './components/Login';
 import EmployeeManagement from './components/Employee/EmployeeManagement';
@@ -15,7 +14,7 @@ import {
 import { store } from './store';
 import { logoutUser } from './store/slices/authSlice';
 import './utils/axiosConfig'; // Initialize axios interceptors
-import { ClientManagement } from './components/Client';
+import ClientManagement from './components/Client/ClientManagement';
 
 // Component to handle auth events
 const AuthEventHandler = () => {

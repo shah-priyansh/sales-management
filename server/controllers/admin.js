@@ -23,7 +23,7 @@ const getDashboard = async (req, res) => {
     const totalAreas = await Area.countDocuments({ isActive: true });
 
     const recentSalesmen = await User.find({ role: 'salesman' })
-      .select('firstName lastName email area lastLogin phone')
+      .select('firstName lastName email area lastLogin phone createdAt')
       .populate('area', 'name city')
       .sort({ createdAt: -1 })
       .limit(5);

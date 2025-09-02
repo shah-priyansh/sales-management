@@ -372,7 +372,7 @@ const ClientManagement = () => {
 
       <Card>
         <CardContent className="p-0">
-          <div className="overflow-auto h-[440px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+          <div className="overflow-auto h-[410px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
             <Table className="w-full table-fixed border-collapse">
               <TableHeader className="sticky top-0 bg-white z-30 shadow-lg border-b-2 border-gray-200">
                 <TableRow className="bg-white hover:bg-white">
@@ -530,7 +530,7 @@ const ClientManagement = () => {
 
       {/* Pagination */}
       {pagination.totalPages > 1 && (
-        <Card className="mt-6">
+        <Card className="mt-2">
           <CardContent className="p-0">
             <Pagination
               currentPage={pagination.currentPage}

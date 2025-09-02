@@ -1,5 +1,5 @@
+import apiClient from '../../utils/axiosConfig';
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
 import toast from 'react-hot-toast';
 
 // Async thunks
@@ -7,7 +7,7 @@ export const fetchDashboardData = createAsyncThunk(
   'dashboard/fetchDashboardData',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get('/api/admin/dashboard');
+      const response = await apiClient.get('/admin/dashboard');
       return response.data;
     } catch (error) {
       const message = error.response?.data?.message || 'Failed to fetch dashboard data';
@@ -20,7 +20,7 @@ export const fetchSalesmenDashboard = createAsyncThunk(
   'dashboard/fetchSalesmenDashboard',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get('/api/salesmen/dashboard');
+      const response = await apiClient.get('/salesmen/dashboard');
       return response.data;
     } catch (error) {
       const message = error.response?.data?.message || 'Failed to fetch dashboard data';

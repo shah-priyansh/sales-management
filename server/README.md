@@ -164,7 +164,6 @@ The React app will open at `http://localhost:3000`
 - `name`, `company`, `email`, `phone` - Contact information
 - `address` - Street, city, state, zip code
 - `area` - Reference to assigned area
-- `assignedSalesman` - Reference to assigned salesman
 - `status` - 'prospect', 'customer', 'active', 'inactive'
 - `notes` - Additional information
 - `lastContact` - Last interaction date
