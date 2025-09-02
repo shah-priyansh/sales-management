@@ -17,13 +17,13 @@ router.get('/dashboard', adminAuth, async (req, res) => {
     const totalAreas = await Area.countDocuments({ isActive: true });
     
     const recentSalesmen = await User.find({ role: 'salesman' })
-      .select('firstName lastName email area lastLogin')
+      .select('firstName lastName email area lastLogin phone')
       .populate('area', 'name city')
       .sort({ createdAt: -1 })
       .limit(5);
 
     const recentClients = await Client.find()
-      .select('name company area status createdAt')
+      .select('name company area status createdAt phone')
       .populate('area', 'name city')
       .sort({ createdAt: -1 })
       .limit(5);
@@ -48,7 +48,6 @@ router.get('/dashboard', adminAuth, async (req, res) => {
 // @access  Private (Admin only)
 router.post('/users', [
   adminAuth,
-  body('username').notEmpty().withMessage('Username is required'),
   body('email').isEmail().withMessage('Valid email is required'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
   body('firstName').notEmpty().withMessage('First name is required'),
@@ -62,15 +61,15 @@ router.post('/users', [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { username, email, password, firstName, lastName, area, phone } = req.body;
+    const { email, password, firstName, lastName, area, phone } = req.body;
 
     // Check if username or email already exists
     const existingUser = await User.findOne({
-      $or: [{ username }, { email }]
+      $or: [{ email }]
     });
 
     if (existingUser) {
-      return res.status(400).json({ message: 'Username or email already exists' });
+      return res.status(400).json({ message: 'Email already exists' });
     }
 
     // Check if area exists
@@ -81,7 +80,6 @@ router.post('/users', [
 
     // Create new user
     const user = new User({
-      username,
       email,
       password,
       firstName,
@@ -104,9 +102,6 @@ router.post('/users', [
   }
 });
 
-// @route   GET /api/admin/users
-// @desc    Get all users
-// @access  Private (Admin only)
 router.get('/users', adminAuth, async (req, res) => {
   try {
     const { role, area, search, page = 1, limit = 10 } = req.query;
@@ -119,7 +114,6 @@ router.get('/users', adminAuth, async (req, res) => {
       query.$or = [
         { firstName: { $regex: search, $options: 'i' } },
         { lastName: { $regex: search, $options: 'i' } },
-        { username: { $regex: search, $options: 'i' } },
         { email: { $regex: search, $options: 'i' } }
       ];
     }
@@ -191,24 +185,23 @@ router.put('/users/:id', [
   }
 });
 
-// @route   DELETE /api/admin/users/:id
-// @desc    Delete user (soft delete)
-// @access  Private (Admin only)
 router.delete('/users/:id', adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     
-    const user = await User.findByIdAndUpdate(
-      id,
-      { isActive: false },
-      { new: true }
-    );
-
+    const user = await User.findById(id);
+    
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    res.json({ message: 'User deactivated successfully' });
+    // Hard delete - permanently remove from database
+    await User.findByIdAndDelete(id);
+
+    res.json({ 
+      message: 'User deleted successfully',
+      data: { id: user._id, name: `${user.firstName} ${user.lastName}` }
+    });
   } catch (error) {
     console.error('Delete user error:', error);
     res.status(500).json({ message: 'Server error' });

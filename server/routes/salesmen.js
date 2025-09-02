@@ -5,9 +5,6 @@ const User = require('../models/User');
 
 const router = express.Router();
 
-// @route   GET /api/salesmen/profile
-// @desc    Get salesman profile
-// @access  Private (Salesman only)
 router.get('/profile', salesmanAuth, async (req, res) => {
   try {
     const user = await User.findById(req.user._id)

@@ -1,20 +1,18 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import apiClient from '../../utils/axiosConfig';
 const API_URL = process.env.REACT_APP_API_URL;
 // Async thunks
 export const loginUser = createAsyncThunk(
   'auth/loginUser',
   async (credentials, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${API_URL}/auth/login`, credentials);
+      const response = await apiClient.post('/auth/login', credentials);
       const { token, user } = response.data;
 
       // Store token in localStorage
       localStorage.setItem('sales-management-token', token);
-
-      // Set default auth header
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
       return { token, user };
     } catch (error) {
@@ -32,7 +30,7 @@ export const logoutUser = createAsyncThunk(
       localStorage.removeItem('sales-management-token');
 
       // Remove auth header
-      delete axios.defaults.headers.common['Authorization'];
+      delete apiClient.defaults.headers.common['Authorization'];
 
       return null;
     } catch (error) {
@@ -52,7 +50,7 @@ export const checkAuthStatus = createAsyncThunk(
       }
 
       // Set auth header
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
       return token;
     } catch (error) {
@@ -62,7 +60,7 @@ export const checkAuthStatus = createAsyncThunk(
         if (error.response.status === 401) {
           // Unauthorized - token is invalid
           localStorage.removeItem('sales-management-token');
-          delete axios.defaults.headers.common['Authorization'];
+          delete apiClient.defaults.headers.common['Authorization'];
           return rejectWithValue('INVALID_TOKEN');
         } else if (error.response.status >= 500) {
           // Server error
@@ -77,7 +75,7 @@ export const checkAuthStatus = createAsyncThunk(
       } else {
         // Other errors
         localStorage.removeItem('sales-management-token');
-        delete axios.defaults.headers.common['Authorization'];
+        delete apiClient.defaults.headers.common['Authorization'];
         return rejectWithValue('UNKNOWN_ERROR');
       }
     }
@@ -88,7 +86,7 @@ export const changePassword = createAsyncThunk(
   'auth/changePassword',
   async (passwordData, { rejectWithValue }) => {
     try {
-        await axios.post(`${API_URL}/auth/change-password`, passwordData);
+        await apiClient.post('/auth/change-password', passwordData);
       return 'Password changed successfully';
     } catch (error) {
       const message = error.response?.data?.message || 'Password change failed';

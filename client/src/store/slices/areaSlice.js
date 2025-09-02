@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import apiClient from '../../utils/axiosConfig';
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -7,7 +8,7 @@ const API_URL = process.env.REACT_APP_API_URL;
 export const fetchAreas = createAsyncThunk('areas/fetchAreas', async (params = {}, { rejectWithValue }) => {
   try {
     const { page = 1, limit = 20, search = '', city = '', isActive = '' } = params;
-    const response = await axios.get(`${API_URL}/areas`, {
+    const response = await apiClient.get('/areas', {
       params: { page, limit, search, city, isActive }
     });
     return response.data.data;
@@ -16,39 +17,39 @@ export const fetchAreas = createAsyncThunk('areas/fetchAreas', async (params = {
   }
 });
 
-export const addAreaFetch = createAsyncThunk('areas/addAreaFetch', async (area) => {
+export const addAreaFetch = createAsyncThunk('areas/addAreaFetch', async (area, { rejectWithValue }) => {
   try {
-    const response = await axios.post(`${API_URL}/areas`, area);
+    const response = await apiClient.post('/areas', area);
     return response.data;
   } catch (error) {
-    throw error.response?.data?.message || 'Failed to add area';
+    return rejectWithValue(error.response?.data?.message || 'Failed to add area');
   }
 });
 
-export const deleteAreaFetch = createAsyncThunk('areas/deleteAreaFetch', async (areaId) => {
+export const deleteAreaFetch = createAsyncThunk('areas/deleteAreaFetch', async (areaId, { rejectWithValue }) => {
   try {
-    await axios.delete(`${API_URL}/areas/${areaId}`);
+    await apiClient.delete(`/areas/${areaId}`);
     return areaId;
   } catch (error) {
-    throw error.response?.data?.message || 'Failed to delete area';
+    return rejectWithValue(error.response?.data?.message || 'Failed to delete area');
   }
 });
 
-export const toggleAreaStatusFetch = createAsyncThunk('areas/toggleAreaStatusFetch', async (areaId) => {
+export const toggleAreaStatusFetch = createAsyncThunk('areas/toggleAreaStatusFetch', async (areaId, { rejectWithValue }) => {
   try {
-    const response = await axios.patch(`${API_URL}/areas/${areaId}/toggle-status`);
+    const response = await apiClient.patch(`/areas/${areaId}/toggle-status`);
     return response.data;
   } catch (error) {
-    throw error.response?.data?.message || 'Failed to toggle area status';
+    return rejectWithValue(error.response?.data?.message || 'Failed to toggle area status');
   }
 });
 
-export const updateAreaFetch = createAsyncThunk('areas/updateAreaFetch', async ({ id, data }) => {
+export const updateAreaFetch = createAsyncThunk('areas/updateAreaFetch', async ({ id, data }, { rejectWithValue }) => {
   try {
-    const response = await axios.put(`${API_URL}/areas/${id}`, data);
+    const response = await apiClient.put(`/areas/${id}`, data);
     return response.data;
   } catch (error) {
-    throw error.response?.data?.message || 'Failed to update area';
+    return rejectWithValue(error.response?.data?.message || 'Failed to update area');
   }
 });
 

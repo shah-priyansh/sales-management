@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
-import { Provider } from 'react-redux';
+import { Provider, useDispatch } from 'react-redux';
 import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import { AreaManagement } from './components/Area';
 import Clients from './components/Client';
@@ -13,10 +13,35 @@ import {
   PublicRoute,
 } from './middleware';
 import { store } from './store';
+import { logoutUser } from './store/slices/authSlice';
+import './utils/axiosConfig'; // Initialize axios interceptors
+
+// Component to handle auth events
+const AuthEventHandler = () => {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    const handleAuthLogout = (event) => {
+      if (event.detail?.reason === '401_unauthorized') {
+        dispatch(logoutUser());
+      }
+    };
+
+    window.addEventListener('auth:logout', handleAuthLogout);
+    
+    return () => {
+      window.removeEventListener('auth:logout', handleAuthLogout);
+    };
+  }, [dispatch]);
+
+  return null;
+};
 
 const AppRoutes = () => {
   return (
-    <Routes>
+    <>
+      <AuthEventHandler />
+      <Routes>
       <Route 
         path="/login" 
         element={
@@ -72,6 +97,7 @@ const AppRoutes = () => {
         }
       />
     </Routes>
+    </>
   );
 };
 

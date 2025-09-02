@@ -135,7 +135,7 @@ const AreaManagement = () => {
       {areasError && (
         <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
           <div className="text-red-800">
-            <strong>Error:</strong> {areasError}
+            <strong>Error:</strong> {typeof areasError === 'string' ? areasError : 'An error occurred'}
           </div>
         </div>
       )}
