@@ -5,6 +5,7 @@ const clientsRoutes = require('./clients');
 const areasRoutes = require('./areas');
 const statesRoutes = require('./states');
 const citiesRoutes = require('./cities');
+const otpRoutes = require('./otp');
 
 const v1Routes = (app) => {
     app.use('/v1/auth', authRoutes);
@@ -14,6 +15,7 @@ const v1Routes = (app) => {
     app.use('/v1/areas', areasRoutes);
     app.use('/v1/states', statesRoutes);
     app.use('/v1/cities', citiesRoutes);
+    app.use('/v1/otp', otpRoutes);
 };
 
 module.exports = v1Routes;

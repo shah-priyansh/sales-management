@@ -1,6 +1,6 @@
 const express = require('express');
 const { body } = require('express-validator');
-const { adminAuth, salesmanAuth } = require('../middleware/auth');
+const { adminAuth, auth } = require('../middleware/auth');
 const {
   createClient,
   getClients,
@@ -26,7 +26,7 @@ router.post('/', [
   body('notes').optional().trim()
 ], createClient);
 
-router.get('/', getClients);
+router.get('/',auth, getClients);
 
 router.get('/:id', getClientById);
 
