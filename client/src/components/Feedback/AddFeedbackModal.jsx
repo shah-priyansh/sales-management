@@ -411,27 +411,6 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
                       )}
                     </Button>
 
-                    <span className="text-sm text-gray-500">or</span>
-
-                    <label className="cursor-pointer">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="flex items-center gap-2"
-                        asChild
-                      >
-                        <span>
-                          <Upload className="h-4 w-4" />
-                          Upload Audio
-                        </span>
-                      </Button>
-                      <input
-                        type="file"
-                        accept="audio/*"
-                        onChange={handleFileUpload}
-                        className="hidden"
-                      />
-                    </label>
                   </>
                 ) : (
                   <div className="flex items-center gap-2">

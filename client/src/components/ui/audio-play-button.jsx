@@ -21,8 +21,9 @@ const AudioPlayButton = ({ feedbackId, className = "" }) => {
             if (!generateAudioPlaybackUrl.fulfilled.match(response)) {
                 throw new Error('Failed to fetch audio URL');
             }
+            console.log(response);
 
-            const data = await response.data;
+            const data = response.payload; // Fixed: use payload instead of data
             setAudioUrl(data.signedUrl);
 
             // Create audio element

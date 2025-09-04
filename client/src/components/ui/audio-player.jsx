@@ -45,8 +45,9 @@ const AudioPlayer = ({ feedbackId, className = "" }) => {
       setIsLoading(true);
       setError(null);
       
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/v1/feedback/${feedbackId}/audio-url`, {
+      const token = localStorage.getItem('sales-management-token');
+      const baseURL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+      const response = await fetch(`${baseURL}/api/v1/feedback/${feedbackId}/audio-url`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
