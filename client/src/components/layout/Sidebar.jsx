@@ -44,11 +44,11 @@ const Sidebar = ({ open, setOpen }) => {
                 <X className="h-6 w-6 text-white" />
               </button>
             </div>
-            
+
             {/* Mobile sidebar content */}
             <div className="flex-1 h-0 pt-5 pb-4 flex flex-col">
-              <div className="flex-shrink-0 flex items-center px-4">
-                <h2 className="text-lg font-semibold text-gray-900">BizKey CRM</h2>
+              <div className="flex-shrink-0 flex items-center justify-center px-4 py-4">
+                <img src="/images/logo-1.png" alt="BizKey" className="h-12 w-auto object-contain" />
               </div>
               <nav className="mt-5 px-2 space-y-1 flex-1">
                 {navigation.map((item) => (
@@ -56,24 +56,22 @@ const Sidebar = ({ open, setOpen }) => {
                     key={item.name}
                     to={item.href}
                     onClick={() => setOpen(false)}
-                    className={`group flex items-center px-3 py-2 text-base font-medium rounded-lg transition-all duration-200 ${
-                      isActive(item.href)
+                    className={`group flex items-center px-3 py-2 text-base font-medium rounded-lg transition-all duration-200 ${isActive(item.href)
                         ? 'text-blue-600 border-l-4 border-blue-500'
                         : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 hover:shadow-sm'
-                    }`}
+                      }`}
                   >
                     <item.icon
-                      className={`mr-4 h-6 w-6 ${
-                        isActive(item.href)
+                      className={`mr-4 h-6 w-6 ${isActive(item.href)
                           ? 'text-blue-600'
                           : 'text-gray-400 group-hover:text-gray-600'
-                      }`}
+                        }`}
                     />
                     {item.name}
                   </NavLink>
                 ))}
               </nav>
-              
+
               {/* Logout button for mobile */}
               <div className="px-2 pb-4">
                 <button
@@ -94,32 +92,31 @@ const Sidebar = ({ open, setOpen }) => {
         <div className="flex flex-col w-64">
           <div className="flex flex-col h-0 flex-1 bg-white border-r border-gray-200">
             <div className="flex-1 flex flex-col pt-5 pb-4">
-              <div className="flex items-center flex-shrink-0 px-4">
-                <h2 className="text-lg font-semibold text-gray-900">BizKey</h2>
+              <div className="flex items-center justify-center gap-2 py-4 h-[45px] w-[180px]">
+                <img src="/images/logo.png" alt="BizKey" className=" w-auto object-contain" />
+                {/* <h2 className="text-lg font-semibold text-gray-900">BizKey</h2> */}
               </div>
               <nav className="mt-5 flex-1 px-2 bg-white space-y-1 overflow-y-auto">
                 {navigation.map((item) => (
                   <NavLink
                     key={item.name}
                     to={item.href}
-                    className={`group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
-                      isActive(item.href)
+                    className={`group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${isActive(item.href)
                         ? 'text-blue-600 border-l-4 border-blue-500'
                         : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 hover:shadow-sm'
-                    }`}
+                      }`}
                   >
                     <item.icon
-                      className={`mr-3 h-5 w-5 ${
-                        isActive(item.href)
+                      className={`mr-3 h-5 w-5 ${isActive(item.href)
                           ? 'text-blue-600'
                           : 'text-gray-400 group-hover:text-gray-600'
-                      }`}
+                        }`}
                     />
                     {item.name}
                   </NavLink>
                 ))}
               </nav>
-              
+
               {/* Logout button for desktop */}
               <div className="px-2 pb-4 flex justify-center m-auto w-full max-w-full">
                 <Button

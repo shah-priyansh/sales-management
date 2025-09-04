@@ -88,83 +88,101 @@ const Dashboard = () => {
     const getStatusColor = (lead) => {
       switch (lead) {
         case 'Green':
-          return 'bg-green-500 text-white';
+          return 'bg-gradient-to-r from-green-400 to-green-500 text-white shadow-green-200';
         case 'Red':
-          return 'bg-red-500 text-white';
+          return 'bg-gradient-to-r from-red-400 to-red-500 text-white shadow-red-200';
         case 'Orange':
-          return 'bg-orange-500 text-white';
+          return 'bg-gradient-to-r from-orange-400 to-orange-500 text-white shadow-orange-200';
         default:
-          return 'bg-gray-500 text-white';
+          return 'bg-gradient-to-r from-gray-400 to-gray-500 text-white shadow-gray-200';
       }
     };
 
     const getStatusIcon = (lead) => {
       switch (lead) {
         case 'Green':
-          return '●';
+          return '✓';
         case 'Red':
-          return '●';
+          return '✗';
         case 'Orange':
-          return '●';
+          return '!';
         default:
-          return '●';
+          return '?';
       }
     };
 
     return (
-      <div className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
+      <div className="bg-white rounded-xl p-5 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-gray-200">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
-                <span className="text-white font-semibold text-sm">
-                  {inquiry.client?.name?.charAt(0) || 'U'}
-                </span>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="relative">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 rounded-full flex items-center justify-center shadow-lg">
+                  <span className="text-white font-bold text-lg">
+                    {inquiry.client?.name?.charAt(0) || 'U'}
+                  </span>
+                </div>
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-white rounded-full border-2 border-white"></div>
               </div>
               <div className="flex-1">
-                <h4 className="text-lg font-semibold text-gray-900">{inquiry.client?.name || 'Unknown Client'}</h4>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(inquiry.lead)}`}>
+                <h4 className="text-xl font-bold text-gray-900 mb-2">{inquiry.client?.name || 'Unknown Client'}</h4>
+                <div className="flex items-center gap-3">
+                  <span className={`px-3 py-1.5 rounded-full text-sm font-semibold shadow-sm ${getStatusColor(inquiry.lead)}`}>
                     {getStatusIcon(inquiry.lead)} {inquiry.lead}
                   </span>
                   {inquiry.audio?.key && (
-                    <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-                      🎵 Audio
+                    <span className="px-3 py-1.5 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 rounded-full text-sm font-medium border border-blue-200">
+                      🎵 Audio Available
                     </span>
                   )}
                 </div>
               </div>
             </div>
             
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="bg-white p-3 rounded-lg border border-gray-200">
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Product</p>
-                <p className="text-sm font-semibold text-gray-900">{inquiry.products || 'Not specified'}</p>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Product</p>
+                </div>
+                <p className="text-sm font-bold text-gray-900">{inquiry.products || 'Not specified'}</p>
               </div>
-              <div className="bg-white p-3 rounded-lg border border-gray-200">
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Quantity</p>
-                <p className="text-sm font-semibold text-gray-900">{inquiry.quantity || 0}</p>
+              <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-xl border border-green-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <p className="text-xs font-semibold text-green-600 uppercase tracking-wide">Quantity</p>
+                </div>
+                <p className="text-sm font-bold text-gray-900">{inquiry.quantity || 0}</p>
               </div>
-              <div className="bg-white p-3 rounded-lg border border-gray-200">
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Created by</p>
-                <p className="text-sm font-semibold text-gray-900">
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-xl border border-purple-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                  <p className="text-xs font-semibold text-purple-600 uppercase tracking-wide">Created by</p>
+                </div>
+                <p className="text-sm font-bold text-gray-900">
                   {inquiry.createdBy ? `${inquiry.createdBy.firstName} ${inquiry.createdBy.lastName}` : 'Unknown'}
                 </p>
               </div>
-              <div className="bg-white p-3 rounded-lg border border-gray-200">
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Date</p>
-                <p className="text-sm font-semibold text-gray-900">
+              <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-xl border border-orange-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                  <p className="text-xs font-semibold text-orange-600 uppercase tracking-wide">Date</p>
+                </div>
+                <p className="text-sm font-bold text-gray-900">
                   {new Date(inquiry.createdAt).toLocaleDateString()}
                 </p>
               </div>
             </div>
             
             {inquiry.notes && (
-              <div className="mt-3 bg-white p-3 rounded-lg border border-gray-200">
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Notes</p>
-                <p className="text-sm text-gray-700">
-                  {inquiry.notes.length > 100 
-                    ? inquiry.notes.substring(0, 100) + '...' 
+              <div className="mt-4 bg-gradient-to-br from-gray-50 to-gray-100 p-4 rounded-xl border border-gray-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
+                  <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Notes</p>
+                </div>
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  {inquiry.notes.length > 120 
+                    ? inquiry.notes.substring(0, 120) + '...' 
                     : inquiry.notes
                   }
                 </p>
@@ -242,26 +260,26 @@ const Dashboard = () => {
       </div>
 
       {/* Recent Inquiries - Prominent Section */}
-      <Card>
+      <Card className="border-0 shadow-lg">
         <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <MessageCircle className="h-6 w-6 text-purple-600" />
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg">
+                <MessageCircle className="h-7 w-7 text-white" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-gray-900">Recent Inquiries</h3>
-                <p className="text-sm text-gray-600">Latest customer feedback and leads</p>
+                <h3 className="text-2xl font-bold text-gray-900">Recent Inquiries</h3>
+                <p className="text-sm text-gray-600 mt-1">Latest customer inquiries and leads</p>
               </div>
             </div>
             <button 
               onClick={() => navigate('/inquiries')}
-              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
+              className="px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl hover:from-primary-700 hover:to-primary-800 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
               View All Inquiries
             </button>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-4">
             {recentInquiries.length > 0 ? (
               recentInquiries.map((inquiry) => (
                 <InquiryItem
@@ -270,10 +288,12 @@ const Dashboard = () => {
                 />
               ))
             ) : (
-              <div className="text-center py-8">
-                <MessageCircle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">No recent inquiries</p>
-                <p className="text-sm text-gray-400">Customer feedback will appear here</p>
+              <div className="text-center py-12">
+                <div className="p-4 bg-gray-100 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                  <MessageCircle className="h-8 w-8 text-gray-400" />
+                </div>
+                <p className="text-gray-600 font-medium">No recent inquiries</p>
+                <p className="text-sm text-gray-400 mt-1">Customer inquiries will appear here</p>
               </div>
             )}
           </div>
@@ -384,7 +404,7 @@ const Dashboard = () => {
                 </div>
                 <div className="text-left">
                   <h4 className="font-semibold text-gray-800 text-sm">View Inquiries</h4>
-                  <p className="text-xs text-gray-500">Check customer feedback</p>
+                  <p className="text-xs text-gray-500">Check customer inquiries</p>
                 </div>
               </div>
               <div className="absolute inset-0 bg-gradient-to-r from-orange-500/5 to-orange-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>

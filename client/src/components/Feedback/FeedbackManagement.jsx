@@ -173,7 +173,7 @@ const FeedbackManagement = () => {
                 <MessageSquare className="h-6 w-6 text-blue-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Feedback</p>
+                <p className="text-sm font-medium text-gray-600">Total Inquiries</p>
                 <p className="text-2xl font-bold text-gray-900">{totalFeedbacks}</p>
               </div>
             </div>
@@ -255,7 +255,7 @@ const FeedbackManagement = () => {
               className="flex items-center gap-2"
             >
               <Plus className="h-5 w-5" />
-              Add Feedback
+              Add Inquiry
             </Button>
           </div>
         </CardContent>
