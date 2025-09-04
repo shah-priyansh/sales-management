@@ -29,11 +29,23 @@ class AudioManager {
     }
   }
 
+  // Pause current audio (keep reference)
+  pauseCurrentAudio() {
+    if (this.currentAudio) {
+      console.log('Pausing current audio in manager', { 
+        feedbackId: this.currentFeedbackId, 
+        paused: this.currentAudio.paused 
+      });
+      this.currentAudio.pause();
+    }
+  }
+
   // Check if audio is currently playing
   isPlaying(feedbackId) {
     return this.currentFeedbackId === feedbackId && 
            this.currentAudio && 
-           !this.currentAudio.paused;
+           !this.currentAudio.paused &&
+           !this.currentAudio.ended;
   }
 
   // Get current playing feedback ID

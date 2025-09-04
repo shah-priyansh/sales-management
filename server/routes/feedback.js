@@ -9,7 +9,8 @@ const {
   getFeedbackById,
   updateFeedback,
   deleteFeedback,
-  getFeedbackStats
+  getFeedbackStats,
+  getFeedbackByClient
 } = require('../controllers/feedback');
 const feedbackValidation = require('../validations/feedback');
 
@@ -20,6 +21,8 @@ router.get('/:feedbackId/audio-url', auth, generateAudioPlaybackUrl);
 router.post('/', auth, feedbackValidation.createFeedbackValidation, createFeedback);
 
 router.get('/', auth, getAllFeedback);
+
+router.get('/client', auth, getFeedbackByClient);
 
 router.get('/stats', auth, getFeedbackStats);
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Play, Pause, Volume2 } from 'lucide-react';
 import { generateAudioPlaybackUrl } from '../../store/slices/feedbackSlice';
 import { useDispatch } from 'react-redux';
@@ -10,12 +10,27 @@ const AudioPlayButton = ({ feedbackId, className = "" }) => {
     const [audioUrl, setAudioUrl] = useState(null);
     const [error, setError] = useState(null);
     const [audio, setAudio] = useState(null);
+    const [userPaused, setUserPaused] = useState(false);
+    const [autoPlayListener, setAutoPlayListener] = useState(null);
+    const userPausedRef = useRef(false);
     const dispatch = useDispatch();
 
     useEffect(() => {
         const checkAudioState = () => {
             const isCurrentlyPlaying = audioManager.isPlaying(feedbackId);
-            setIsPlaying(isCurrentlyPlaying);
+            // Don't auto-update state if user manually paused
+            if (userPaused && !isCurrentlyPlaying) {
+                return; // Keep the paused state
+            }
+            if (isCurrentlyPlaying !== isPlaying) {
+                console.log('State change detected:', { 
+                    feedbackId, 
+                    wasPlaying: isPlaying, 
+                    nowPlaying: isCurrentlyPlaying,
+                    userPaused
+                });
+                setIsPlaying(isCurrentlyPlaying);
+            }
         };
 
         const interval = setInterval(checkAudioState, 100);
@@ -23,7 +38,7 @@ const AudioPlayButton = ({ feedbackId, className = "" }) => {
         checkAudioState();
 
         return () => clearInterval(interval);
-    }, [feedbackId]);
+    }, [feedbackId, isPlaying, userPaused]);
 
     const fetchAudioUrl = async () => {
         try {
@@ -138,16 +153,27 @@ const AudioPlayButton = ({ feedbackId, className = "" }) => {
             }, 100);
 
             const autoPlayWhenReady = () => {
+                console.log('Auto-play triggered', { feedbackId, userPaused: userPausedRef.current });
+                // Check userPaused state at the time of execution using ref
+                if (userPausedRef.current) {
+                    console.log('Auto-play skipped - user manually paused');
+                    return;
+                }
                 audioManager.stopCurrentAudio();
                 newAudio.play().then(() => {
+                    console.log('Auto-play successful', { feedbackId, paused: newAudio.paused });
                     setIsPlaying(true);
+                    setUserPaused(false);
+                    userPausedRef.current = false;
                     audioManager.setCurrentAudio(newAudio, feedbackId);
                 }).catch(err => {
+                    console.log('Auto-play failed', { feedbackId, error: err });
                     setIsPlaying(false);
                 });
             };
 
             newAudio.addEventListener('canplay', autoPlayWhenReady, { once: true });
+            setAutoPlayListener(autoPlayWhenReady);
         } catch (err) {
             setError(err.message);
         } finally {
@@ -172,8 +198,22 @@ const AudioPlayButton = ({ feedbackId, className = "" }) => {
         }
 
         if (isPlaying) {
+            console.log('Pausing audio...', { feedbackId, audio: !!audio, paused: audio.paused });
+            // Mark that user manually paused FIRST
+            setUserPaused(true);
+            userPausedRef.current = true;
+            // Remove auto-play listener to prevent auto-resume
+            if (autoPlayListener && audio) {
+                audio.removeEventListener('canplay', autoPlayListener);
+                setAutoPlayListener(null);
+            }
+            // Stop the audio completely to prevent auto-resume
             audio.pause();
+            audio.currentTime = 0; // Reset to beginning
             setIsPlaying(false);
+            // Stop in global manager completely
+            audioManager.stopCurrentAudio();
+            console.log('Audio paused and reset, state updated', { userPaused: true });
         } else {
             audioManager.stopCurrentAudio();
             try {
@@ -185,12 +225,22 @@ const AudioPlayButton = ({ feedbackId, className = "" }) => {
                     }
 
                     await audio.play();
+                    console.log('Audio play() called successfully', { feedbackId, paused: audio.paused });
                     setIsPlaying(true);
+                    setUserPaused(false); // Reset user paused flag
+                    userPausedRef.current = false;
                     audioManager.setCurrentAudio(audio, feedbackId);
                 } else {
 
                     const playWhenReady = () => {
+                        if (userPausedRef.current) {
+                            console.log('Play skipped - user manually paused');
+                            return;
+                        }
                         audio.play().then(() => {
+                            setIsPlaying(true);
+                            setUserPaused(false);
+                            userPausedRef.current = false;
                         }).catch(playErr => {
                             setError('Failed to play audio: ' + playErr.message);
                         });

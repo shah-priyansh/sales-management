@@ -141,6 +141,31 @@ const getAllFeedback = async (req, res) => {
   }
 };
 
+const getFeedbackByClient = async (req, res) => {
+  try {
+    const { client, page = 1, limit = 20 } = req.query;
+
+    const feedback = await ClientFeedback.find({ client, isActive: true })
+      .populate('client', 'name company phone area')
+      .populate('createdBy', 'name email')
+      .sort({ date: -1, createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    const total = await ClientFeedback.countDocuments({ client, isActive: true });
+
+    res.json({
+      feedback,
+      totalPages: Math.ceil(total / limit),
+      currentPage: parseInt(page),
+      total
+    });
+  } catch (error) {
+    console.error('Get feedback by client error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 const getFeedbackById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -285,21 +310,21 @@ const getFeedbackStats = async (req, res) => {
 const generateAudioPlaybackUrl = async (req, res) => {
   try {
     const { feedbackId } = req.params;
-    
+
     // Find the feedback record
     const feedback = await ClientFeedback.findById(feedbackId);
     if (!feedback) {
       return res.status(404).json({ message: 'Feedback not found' });
     }
-    
+
     // Check if feedback has audio
     if (!feedback.audio || !feedback.audio.key) {
       return res.status(400).json({ message: 'No audio file found for this feedback' });
     }
-    
+
     // Generate signed URL for audio playback (valid for 1 hour)
     const signedUrl = await getSignedUrlForDownload(feedback.audio.key, 3600);
-    
+
     res.json({
       signedUrl,
       key: feedback.audio.key,
@@ -318,6 +343,7 @@ module.exports = {
   generateAudioPlaybackUrl,
   createFeedback,
   getAllFeedback,
+  getFeedbackByClient,
   getFeedbackById,
   updateFeedback,
   deleteFeedback,
