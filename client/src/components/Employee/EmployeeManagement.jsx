@@ -77,8 +77,11 @@ const UserManagement = () => {
     return () => clearTimeout(timer);
   }, [areaSearchTerm]);
 
-  // Filter areas based on search term
+  // Filter areas based on search term and active status
   const filteredAreas = areas.filter(area => {
+    // First filter by active status
+    if (!area.isActive) return false;
+    
     if (!debouncedAreaSearch) return true;
     const searchLower = debouncedAreaSearch.toLowerCase();
     return (

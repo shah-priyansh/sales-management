@@ -69,14 +69,15 @@ const AddUserModal = ({ isOpen, onClose, onSuccess, user = null }) => {
     return () => clearTimeout(timer);
   }, [areaSearchTerm]);
 
-  // Filter areas based on search term
   const filteredAreas = useMemo(() => {
+    const activeAreas = areas.filter(area => area.isActive);
+    
     if (!debouncedAreaSearch.trim()) {
-      return areas;
+      return activeAreas;
     }
     
     const searchLower = debouncedAreaSearch.toLowerCase();
-    return areas.filter(area => 
+    return activeAreas.filter(area => 
       area.name.toLowerCase().includes(searchLower) ||
       area.city.toLowerCase().includes(searchLower) ||
       area.state.toLowerCase().includes(searchLower)

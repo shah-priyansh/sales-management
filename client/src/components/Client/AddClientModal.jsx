@@ -133,9 +133,10 @@ const AddClientModal = ({ isOpen, onClose, onSuccess, client = null }) => {
         return () => clearTimeout(timer);
     }, [areaSearchTerm]);
 
-    // Filter areas based on search term and selected city
+    // Filter areas based on search term, selected city, and active status
     const filteredAreas = useMemo(() => {
-        let filtered = areas;
+        // First filter by active status
+        let filtered = areas.filter(area => area.isActive);
 
         // Filter by selected city if available
         if (selectedCity) {
