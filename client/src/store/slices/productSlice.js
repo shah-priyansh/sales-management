@@ -76,6 +76,15 @@ export const fetchProductStats = createAsyncThunk('products/fetchProductStats', 
     }
 });
 
+export const toggleProductStatus = createAsyncThunk('products/toggleProductStatus', async (productId, { rejectWithValue }) => {
+    try {
+        const response = await apiClient.patch(`/products/${productId}/toggle-status`);
+        return response.data;
+    } catch (error) {
+        return rejectWithValue(error.response?.data?.message || 'Failed to toggle product status');
+    }
+});
+
 const productSlice = createSlice({
     name: 'products',
     initialState,
@@ -167,6 +176,13 @@ const productSlice = createSlice({
             // Fetch product stats
             .addCase(fetchProductStats.fulfilled, (state, action) => {
                 state.stats = action.payload.data;
+            })
+            // Toggle product status
+            .addCase(toggleProductStatus.fulfilled, (state, action) => {
+                const index = state.products.findIndex(product => product._id === action.payload.data._id);
+                if (index !== -1) {
+                    state.products[index] = action.payload.data;
+                }
             });
     }
 });

@@ -6,7 +6,8 @@ const {
     createProduct,
     updateProduct,
     deleteProduct,
-    getProductStats
+    getProductStats,
+    toggleProductStatus
 } = require('../controllers/product');
 const {
     createProductValidation,
@@ -36,5 +37,8 @@ router.put('/:id', updateProductValidation, updateProduct);
 
 // Delete product
 router.delete('/:id', deleteProductValidation, deleteProduct);
+
+// Toggle product status
+router.patch('/:id/toggle-status', getProductValidation, toggleProductStatus);
 
 module.exports = router;

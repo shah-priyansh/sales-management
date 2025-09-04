@@ -9,7 +9,8 @@ import {
     selectProductsError,
     selectProductsLoading,
     selectProductsPagination,
-    setCurrentPage
+    setCurrentPage,
+    toggleProductStatus
 } from '../../store/slices/productSlice';
 import { formatDate } from '../../utils/authUtils';
 import {
@@ -22,6 +23,7 @@ import {
     LoadingTable,
     Pagination,
     SearchInput,
+    Switch,
     Table,
     TableBody,
     TableCell,
@@ -138,11 +140,22 @@ const ProductManagement = () => {
         setIsDeleting(false);
     };
 
-    const getStatusBadge = (isActive) => {
+    const handleToggleStatus = (productId) => {
+        dispatch(toggleProductStatus(productId));
+    };
+
+    const getStatusBadge = (isActive, productId) => {
         return (
-            <Badge variant={isActive ? "success" : "destructive"}>
-                {isActive ? 'Active' : 'Inactive'}
-            </Badge>
+            <div className="flex items-center gap-2">
+                <Switch
+                    checked={isActive}
+                    onCheckedChange={() => handleToggleStatus(productId)}
+                    className="data-[state=checked]:bg-green-600"
+                />
+                <Badge variant={isActive ? "success" : "destructive"}>
+                    {isActive ? 'Active' : 'Inactive'}
+                </Badge>
+            </div>
         );
     };
     return (
@@ -281,7 +294,7 @@ const ProductManagement = () => {
                                             </TableCell>
 
                                             <TableCell className="px-4 py-3">
-                                                {getStatusBadge(product.isActive)}
+                                                {getStatusBadge(product.isActive, product._id)}
                                             </TableCell>
 
                                             <TableCell className="px-4 py-3">

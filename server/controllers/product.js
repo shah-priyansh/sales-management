@@ -224,11 +224,43 @@ const getProductStats = async (req, res) => {
     }
 };
 
+// Toggle product status
+const toggleProductStatus = async (req, res) => {
+    try {
+        const product = await Product.findById(req.params.id);
+        
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                message: 'Product not found'
+            });
+        }
+
+        // Toggle the status
+        product.isActive = !product.isActive;
+        await product.save();
+
+        res.status(200).json({
+            success: true,
+            message: `Product ${product.isActive ? 'activated' : 'deactivated'} successfully`,
+            data: product
+        });
+    } catch (error) {
+        console.error('Error toggling product status:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to toggle product status',
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     getAllProducts,
     getProductById,
     createProduct,
     updateProduct,
     deleteProduct,
-    getProductStats
+    getProductStats,
+    toggleProductStatus
 };
