@@ -190,6 +190,7 @@ const UserManagement = () => {
           checked={isActive}
           onCheckedChange={() => handleToggleStatus(userId)}
           disabled={usersLoading}
+          className="data-[state=checked]:bg-green-600"
         />
         <Badge variant={isActive ? "success" : "destructive"}>
           {isActive ? 'Active' : 'Inactive'}

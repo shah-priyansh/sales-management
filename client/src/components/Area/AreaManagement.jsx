@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
 import { deleteAreaFetch, fetchAreas, selectAreas, selectAreasError, selectAreasLoading, selectAreasPagination, toggleAreaStatus } from '../../store/slices/areaSlice';
 import { formatDate } from '../../utils/authUtils';
-import { Badge, Button, Card, CardContent, EmptyTable, ErrorTable, LoadingTable, Pagination, SearchInput, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui';
+import { Badge, Button, Card, CardContent, EmptyTable, ErrorTable, LoadingTable, Pagination, SearchInput, Switch, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui';
 import AddAreaModal from './AddAreaModal';
 
 const AreaManagement = () => {
@@ -118,13 +118,16 @@ const AreaManagement = () => {
 
   const getStatusBadge = (isActive, areaId) => {
     return (
-      <Badge
-        variant={isActive ? "success" : "destructive"}
-        className="cursor-pointer hover:opacity-80"
-        onClick={() => handleToggleStatus(areaId)}
-      >
-        {isActive ? 'Active' : 'Inactive'}
-      </Badge>
+      <div className="flex items-center gap-2">
+        <Switch
+          checked={isActive}
+          onCheckedChange={() => handleToggleStatus(areaId)}
+          className="data-[state=checked]:bg-green-600"
+        />
+        <Badge variant={isActive ? "success" : "destructive"}>
+          {isActive ? 'Active' : 'Inactive'}
+        </Badge>
+      </div>
     );
   };
 

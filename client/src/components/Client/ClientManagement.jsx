@@ -202,6 +202,7 @@ const ClientManagement = () => {
           checked={isActive}
           onCheckedChange={() => handleToggleStatus(clientId)}
           disabled={clientsLoading}
+          className="data-[state=checked]:bg-green-600"
         />
         <Badge variant={isActive ? "success" : "destructive"}>
           {isActive ? 'Active' : 'Inactive'}
