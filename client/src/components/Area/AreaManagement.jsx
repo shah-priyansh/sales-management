@@ -2,7 +2,7 @@ import { Building2, Edit, MapPin, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
-import { deleteAreaFetch, fetchAreas, selectAreas, selectAreasError, selectAreasLoading, selectAreasPagination, toggleAreaStatus } from '../../store/slices/areaSlice';
+import { deleteAreaFetch, fetchAreas, selectAreas, selectAreasError, selectAreasLoading, selectAreasPagination, toggleAreaStatusFetch } from '../../store/slices/areaSlice';
 import { formatDate } from '../../utils/authUtils';
 import { Badge, Button, Card, CardContent, EmptyTable, ErrorTable, LoadingTable, Pagination, SearchInput, Switch, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui';
 import AddAreaModal from './AddAreaModal';
@@ -112,8 +112,13 @@ const AreaManagement = () => {
     setIsDeleting(false);
   };
 
-  const handleToggleStatus = (areaId) => {
-    dispatch(toggleAreaStatus(areaId));
+  const handleToggleStatus = async (areaId) => {
+    try {
+      const result = await dispatch(toggleAreaStatusFetch(areaId)).unwrap();
+      toast.success(result.message);
+    } catch (error) {
+      toast.error(typeof error === 'string' ? error : 'Failed to update area status');
+    }
   };
 
   const getStatusBadge = (isActive, areaId) => {

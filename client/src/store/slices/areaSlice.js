@@ -144,9 +144,10 @@ const areaSlice = createSlice({
       })
       .addCase(toggleAreaStatusFetch.fulfilled, (state, action) => {
         state.loading = false;
-        const area = state.areas.find(a => a._id === action.payload._id);
-        if (area) {
-          area.isActive = action.payload.isActive;
+        const updatedArea = action.payload.data;
+        const areaIndex = state.areas.findIndex(a => a._id === updatedArea._id);
+        if (areaIndex !== -1) {
+          state.areas[areaIndex] = updatedArea;
         }
       })
       .addCase(toggleAreaStatusFetch.rejected, (state, action) => {
