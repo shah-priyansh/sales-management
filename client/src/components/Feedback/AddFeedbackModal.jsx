@@ -3,10 +3,9 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useDispatch, useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
-import { addFeedbackFetch, updateFeedbackFetch } from '../../store/slices/feedbackSlice';
+import { addFeedbackFetch, updateFeedbackFetch, generateSignedUrlFetch, uploadAudioToS3, selectSignedUrl, selectUploadSuccess } from '../../store/slices/feedbackSlice';
 import { fetchClients, selectClients, selectClientsLoading } from '../../store/slices/clientSlice';
 import { Button, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea, Badge } from '../ui';
-
 const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
   const dispatch = useDispatch();
   const [selectedClient, setSelectedClient] = useState('');
@@ -39,8 +38,9 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
 
   // Redux selectors
   const clients = useSelector(selectClients);
-  console.log('Clients:', clients);
   const clientsLoading = useSelector(selectClientsLoading);
+  const signedUrl = useSelector(selectSignedUrl);
+  const uploadSuccess = useSelector(selectUploadSuccess);
 
   // Watch form values
   const watchedValues = watch();
@@ -48,7 +48,7 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
   useEffect(() => {
     if (isOpen) {
       dispatch(fetchClients());
-      
+
       if (feedback) {
         setValue('client', feedback.client?._id || '');
         setValue('lead', feedback.lead || 'Green');
@@ -56,7 +56,7 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
         setValue('quantity', feedback.quantity || 1);
         setValue('notes', feedback.notes || '');
         setSelectedClient(feedback.client?._id || '');
-        
+
         if (feedback.audio?.key) {
           setAudioUrl(feedback.audio.url);
         }
@@ -88,7 +88,7 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
     }
   };
 
-  const handleFileUpload = (event) => {
+  const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (file) {
       if (file.type.startsWith('audio/')) {
@@ -96,6 +96,19 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
         const url = URL.createObjectURL(file);
         setAudioUrl(url);
         setAudioBlob(file);
+
+        // Auto-upload to AWS
+        try {
+          setIsUploading(true);
+          const audioData = await handleAudioUpload(file);
+          setValue('audio', audioData);
+          toast.success('Audio uploaded successfully');
+        } catch (error) {
+          toast.error('Failed to upload audio');
+          console.error('Upload error:', error);
+        } finally {
+          setIsUploading(false);
+        }
       } else {
         toast.error('Please select an audio file');
       }
@@ -112,13 +125,27 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
         chunks.push(event.data);
       };
 
-      recorder.onstop = () => {
+      recorder.onstop = async () => {
         const blob = new Blob(chunks, { type: 'audio/wav' });
         setAudioBlob(blob);
         const url = URL.createObjectURL(blob);
         setAudioUrl(url);
-        setAudioFile(new File([blob], 'recording.wav', { type: 'audio/wav' }));
+        const audioFile = new File([blob], 'recording.wav', { type: 'audio/wav' });
+        setAudioFile(audioFile);
         stream.getTracks().forEach(track => track.stop());
+
+        // Auto-upload to AWS
+        try {
+          setIsUploading(true);
+          const audioData = await handleAudioUpload(audioFile);
+          setValue('audio', audioData);
+          toast.success('Audio recorded and uploaded successfully');
+        } catch (error) {
+          toast.error('Failed to upload recorded audio');
+          console.error('Upload error:', error);
+        } finally {
+          setIsUploading(false);
+        }
       };
 
       recorder.start();
@@ -162,6 +189,7 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
     setAudioFile(null);
     setAudioUrl(null);
     setAudioBlob(null);
+    setValue('audio', null);
     if (audioElement) {
       audioElement.pause();
       setAudioElement(null);
@@ -169,39 +197,29 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
     }
   };
 
-  const uploadAudioToS3 = async (file) => {
+  const handleAudioUpload = async (file) => {
     try {
       setIsUploading(true);
-      
-      // Step 1: Get signed URL
-      const signedUrlResponse = await fetch('/api/v1/feedback/signed-url', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          fileName: file.name,
-          fileType: file.type
-        })
-      });
 
-      if (!signedUrlResponse.ok) {
+      // Step 1: Get signed URL
+      const signedUrlResult = await dispatch(generateSignedUrlFetch({ 
+        fileName: file.name, 
+        fileType: file.type 
+      })).unwrap();
+
+      if (!signedUrlResult) {
         throw new Error('Failed to get signed URL');
       }
 
-      const { signedUrl, key } = await signedUrlResponse.json();
+      const { signedUrl: uploadUrl, key } = signedUrlResult;
 
       // Step 2: Upload to S3
-      const uploadResponse = await fetch(signedUrl, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': file.type
-        },
-        body: file
-      });
+      const uploadResult = await dispatch(uploadAudioToS3({ 
+        file, 
+        signedUrl: uploadUrl 
+      })).unwrap();
 
-      if (!uploadResponse.ok) {
+      if (!uploadResult.success) {
         throw new Error('Failed to upload audio');
       }
 
@@ -216,17 +234,11 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
 
   const onSubmit = async (data) => {
     try {
-      let audioData = null;
-      
-      if (audioFile) {
-        audioData = await uploadAudioToS3(audioFile);
-      }
-
       const feedbackData = {
         ...data,
         client: selectedClient,
         quantity: parseInt(data.quantity),
-        audio: audioData
+        audio: data.audio || null
       };
 
       if (feedback) {
@@ -348,7 +360,7 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
               <Input
                 type="number"
                 min="0"
-                {...register('quantity', { 
+                {...register('quantity', {
                   required: 'Quantity is required',
                   min: { value: 0, message: 'Quantity must be 0 or greater' }
                 })}
@@ -374,7 +386,7 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
           {/* Audio Recording Section */}
           <div className="space-y-4 border-t pt-4">
             <label className="text-sm font-medium text-gray-700">Audio Recording</label>
-            
+
             <div className="space-y-3">
               {/* Audio Controls */}
               <div className="flex items-center gap-3">
@@ -398,9 +410,9 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
                         </>
                       )}
                     </Button>
-                    
+
                     <span className="text-sm text-gray-500">or</span>
-                    
+
                     <label className="cursor-pointer">
                       <Button
                         type="button"
@@ -436,7 +448,7 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
                       )}
                       {isPlaying ? 'Pause' : 'Play'} Audio
                     </Button>
-                    
+
                     <Button
                       type="button"
                       variant="outline"
@@ -452,7 +464,22 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
 
               {audioUrl && (
                 <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
-                  Audio file ready for upload
+                  {isUploading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                      Uploading audio to AWS...
+                    </div>
+                  ) : watchedValues.audio ? (
+                    <div className="flex items-center gap-2 text-green-600">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      Audio uploaded successfully
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-yellow-600">
+                      <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                      Audio ready for upload
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -462,15 +489,15 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
             <Button type="button" variant="outline" onClick={handleClose}>
               Cancel
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={isUploading || !selectedClient}
               className="flex items-center gap-2"
             >
               {isUploading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                  Uploading...
+                  {audioUrl ? 'Uploading Audio...' : 'Saving...'}
                 </>
               ) : (
                 <>

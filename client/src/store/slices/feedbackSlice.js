@@ -10,7 +10,9 @@ const initialState = {
         totalPages: 1,
         totalItems: 0,
         itemsPerPage: 10
-    }
+    },
+    signedUrl: null,
+    uploadSuccess: false
 };
 
 export const fetchFeedbacks = createAsyncThunk('feedbacks/fetchFeedbacks', async (params = {}, { rejectWithValue }) => {
@@ -49,6 +51,36 @@ export const deleteFeedback = createAsyncThunk('feedbacks/deleteFeedback', async
         return feedbackId;
     } catch (error) {
         return rejectWithValue(error.response?.data?.message || 'Failed to delete feedback');
+    }
+});
+
+export const generateSignedUrlFetch = createAsyncThunk('feedbacks/generateSignedUrl', async (data, { rejectWithValue }) => {
+    try {
+        const response = await apiClient.post('/feedback/signed-url', data);
+        return response.data;
+    } catch (error) {
+        return rejectWithValue(error.response?.data?.message || 'Failed to generate signed URL');
+    }
+});
+
+export const uploadAudioToS3 = createAsyncThunk('feedbacks/uploadAudioToS3', async ({ file, signedUrl }, { rejectWithValue }) => {
+    try {
+        // Use fetch instead of apiClient to avoid adding Authorization header
+        const response = await fetch(signedUrl, {
+            method: 'PUT',
+            body: file,
+            headers: {
+                'Content-Type': file.type
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Upload failed with status: ${response.status}`);
+        }
+        
+        return { success: true, status: response.status };
+    } catch (error) {
+        return rejectWithValue(error.message || 'Failed to upload audio to S3');
     }
 });
 
@@ -144,6 +176,31 @@ const feedbackSlice = createSlice({
                 state.loading = false;
                 state.error = action.payload;
             })
+            .addCase(generateSignedUrlFetch.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(generateSignedUrlFetch.fulfilled, (state, action) => {
+                state.loading = false;
+                state.signedUrl = action.payload;
+            })
+            .addCase(generateSignedUrlFetch.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            .addCase(uploadAudioToS3.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(uploadAudioToS3.fulfilled, (state, action) => {
+                state.loading = false;
+                state.uploadSuccess = true;
+            })
+            .addCase(uploadAudioToS3.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+                state.uploadSuccess = false;
+            })
     }
 });
 
@@ -154,5 +211,7 @@ export const selectFeedbacks = (state) => state.feedback.feedbacks;
 export const selectFeedbacksLoading = (state) => state.feedback.loading;
 export const selectFeedbacksError = (state) => state.feedback.error;
 export const selectFeedbacksPagination = (state) => state.feedback.pagination;
+export const selectSignedUrl = (state) => state.feedback.signedUrl;
+export const selectUploadSuccess = (state) => state.feedback.uploadSuccess;
 
 export default feedbackSlice.reducer;
