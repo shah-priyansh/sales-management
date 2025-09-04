@@ -4,6 +4,7 @@ import apiClient from '../../utils/axiosConfig';
 const initialState = {
     feedbacks: [],
     loading: false,
+    audioLoading: false,
     error: null,
     pagination: {
         currentPage: 1,
@@ -165,15 +166,15 @@ const feedbackSlice = createSlice({
                 state.error = action.payload;
             })
             .addCase(generateAudioPlaybackUrl.pending, (state) => {
-                state.loading = true;
+                state.audioLoading = true;
                 state.error = null;
             })
             .addCase(generateAudioPlaybackUrl.fulfilled, (state, action) => {
-                state.loading = false;
+                state.audioLoading = false;
                 state.audioUrl = action.payload;
             })
             .addCase(generateAudioPlaybackUrl.rejected, (state, action) => {
-                state.loading = false;
+                state.audioLoading = false;
                 state.error = action.payload;
             })
             .addCase(generateSignedUrlFetch.pending, (state) => {
@@ -209,6 +210,7 @@ export const { clearError, setCurrentPage } = feedbackSlice.actions;
 // Selectors
 export const selectFeedbacks = (state) => state.feedback.feedbacks;
 export const selectFeedbacksLoading = (state) => state.feedback.loading;
+export const selectAudioLoading = (state) => state.feedback.audioLoading;
 export const selectFeedbacksError = (state) => state.feedback.error;
 export const selectFeedbacksPagination = (state) => state.feedback.pagination;
 export const selectSignedUrl = (state) => state.feedback.signedUrl;

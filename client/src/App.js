@@ -88,7 +88,7 @@ const AppRoutes = () => {
           }
         />
          <Route
-          path="feedback"
+          path="inquiries"
           element={
             <ProtectedRoute allowedRoles={['admin']}>
               <FeedbackManagement />

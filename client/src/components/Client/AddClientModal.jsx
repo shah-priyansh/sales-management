@@ -10,13 +10,13 @@ import { fetchCitiesByState, selectCitiesByState, selectCitiesLoading, selectCit
 import { Button, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea } from '../ui';
 
 const AddClientModal = ({ isOpen, onClose, onSuccess, client = null }) => {
-         const [selectedArea, setSelectedArea] = useState('');
-     const [selectedState, setSelectedState] = useState('');
-     const [selectedStateId, setSelectedStateId] = useState('');
-     const [selectedCity, setSelectedCity] = useState('');
-     const [areaSearchTerm, setAreaSearchTerm] = useState('');
-     const [debouncedAreaSearch, setDebouncedAreaSearch] = useState('');
-     const [userChangedState, setUserChangedState] = useState(false);
+    const [selectedArea, setSelectedArea] = useState('');
+    const [selectedState, setSelectedState] = useState('');
+    const [selectedStateId, setSelectedStateId] = useState('');
+    const [selectedCity, setSelectedCity] = useState('');
+    const [areaSearchTerm, setAreaSearchTerm] = useState('');
+    const [debouncedAreaSearch, setDebouncedAreaSearch] = useState('');
+    const [userChangedState, setUserChangedState] = useState(false);
     const dispatch = useDispatch();
     const areas = useSelector(selectAreas);
     const areasLoading = useSelector(selectAreasLoading);
@@ -62,31 +62,31 @@ const AddClientModal = ({ isOpen, onClose, onSuccess, client = null }) => {
         }
     }, [selectedStateId, dispatch]);
 
-         // Set city when cities are loaded in edit mode
-     useEffect(() => {
-         if (isEditMode && client && cities.length > 0 && !selectedCity && !userChangedState) {
-             // Find the city in the loaded cities
-             const cityObj = cities.find(city => city.name === client.address?.city);
-             if (cityObj) {
-                 setSelectedCity(cityObj.name);
-             }
-         }
-     }, [isEditMode, client, cities, selectedCity, userChangedState]);
+    // Set city when cities are loaded in edit mode
+    useEffect(() => {
+        if (isEditMode && client && cities.length > 0 && !selectedCity && !userChangedState) {
+            // Find the city in the loaded cities
+            const cityObj = cities.find(city => city.name === client.address?.city);
+            if (cityObj) {
+                setSelectedCity(cityObj.name);
+            }
+        }
+    }, [isEditMode, client, cities, selectedCity, userChangedState]);
 
-         // Set area when city is set in edit mode
-     useEffect(() => {
-         if (isEditMode && client && selectedCity && !selectedArea && !userChangedState) {
-             // Find the area in the filtered areas
-             const areaObj = areas.find(area => 
-                 area.city === selectedCity && 
-                 area._id === client.area?._id
-             );
-             if (areaObj) {
-                 setSelectedArea(areaObj._id);
-                 setValue('area', areaObj._id, { shouldValidate: true });
-             }
-         }
-     }, [isEditMode, client, selectedCity, selectedArea, areas, setValue, userChangedState]);
+    // Set area when city is set in edit mode
+    useEffect(() => {
+        if (isEditMode && client && selectedCity && !selectedArea && !userChangedState) {
+            // Find the area in the filtered areas
+            const areaObj = areas.find(area =>
+                area.city === selectedCity &&
+                area._id === client.area?._id
+            );
+            if (areaObj) {
+                setSelectedArea(areaObj._id);
+                setValue('area', areaObj._id, { shouldValidate: true });
+            }
+        }
+    }, [isEditMode, client, selectedCity, selectedArea, areas, setValue, userChangedState]);
 
     // Populate form when in edit mode
     useEffect(() => {
@@ -190,18 +190,18 @@ const AddClientModal = ({ isOpen, onClose, onSuccess, client = null }) => {
         }
     };
 
-         const handleClose = () => {
-         reset();
-         setSelectedArea('');
-         setSelectedState('');
-         setSelectedStateId('');
-         setSelectedCity('');
-         setAreaSearchTerm('');
-         setDebouncedAreaSearch('');
-         setUserChangedState(false);
-         dispatch(clearCitiesByState());
-         onClose();
-     };
+    const handleClose = () => {
+        reset();
+        setSelectedArea('');
+        setSelectedState('');
+        setSelectedStateId('');
+        setSelectedCity('');
+        setAreaSearchTerm('');
+        setDebouncedAreaSearch('');
+        setUserChangedState(false);
+        dispatch(clearCitiesByState());
+        onClose();
+    };
 
     return (
         <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -248,12 +248,19 @@ const AddClientModal = ({ isOpen, onClose, onSuccess, client = null }) => {
 
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-gray-700">
-                                Company
+                                Company *
                             </label>
                             <Input
+                                {...register('company', {
+                                    required: 'Company is required',
+                                    minLength: { value: 2, message: 'Min 2 characters' }
+                                })}
                                 {...register('company')}
                                 placeholder="ABC Company"
                             />
+                            {errors.company && (
+                                <p className="text-sm text-red-600">{errors.company.message}</p>
+                            )}
                         </div>
                     </div>
 
@@ -331,21 +338,21 @@ const AddClientModal = ({ isOpen, onClose, onSuccess, client = null }) => {
                                 <label className="text-sm font-medium text-gray-700">
                                     State *
                                 </label>
-                                                                 <Select
-                                     value={selectedState}
-                                     onValueChange={(stateName) => {
-                                         setSelectedState(stateName);
-                                         const stateObj = states.find(s => s.name === stateName);
-                                         setSelectedStateId(stateObj?._id || '');
-                                         // Clear city and area when state changes
-                                         setSelectedCity('');
-                                         setSelectedArea('');
-                                         setValue('area', '', { shouldValidate: true });
-                                         // Mark that user manually changed state
-                                         setUserChangedState(true);
-                                     }}
-                                     disabled={statesLoading}
-                                 >
+                                <Select
+                                    value={selectedState}
+                                    onValueChange={(stateName) => {
+                                        setSelectedState(stateName);
+                                        const stateObj = states.find(s => s.name === stateName);
+                                        setSelectedStateId(stateObj?._id || '');
+                                        // Clear city and area when state changes
+                                        setSelectedCity('');
+                                        setSelectedArea('');
+                                        setValue('area', '', { shouldValidate: true });
+                                        // Mark that user manually changed state
+                                        setUserChangedState(true);
+                                    }}
+                                    disabled={statesLoading}
+                                >
                                     <SelectTrigger className="w-full">
                                         <SelectValue placeholder="Select state..." />
                                     </SelectTrigger>
@@ -521,10 +528,10 @@ const AddClientModal = ({ isOpen, onClose, onSuccess, client = null }) => {
                         >
                             {clientsLoading ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Client' : 'Create Client')}
                         </Button>
-                                    </DialogFooter>
-            </form>
-        </DialogContent>
-    </Dialog>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
     );
 };
 

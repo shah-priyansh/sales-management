@@ -45,20 +45,40 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
   // Watch form values
   const watchedValues = watch();
 
+  // Debug clients loading and set client when clients are loaded
+  useEffect(() => {
+    console.log('Clients loaded:', clients, 'Loading:', clientsLoading);
+    
+    // Set client selection after clients are loaded
+    if (feedback && clients.length > 0 && !clientsLoading) {
+      console.log('Feedback client object:', feedback.client);
+      const clientId = feedback.client?._id || '';
+      console.log('Setting client after clients loaded:', clientId, 'Available clients:', clients.map(c => ({ id: c._id, name: c.name })));
+      setSelectedClient(clientId);
+      setValue('client', clientId);
+    }
+  }, [clients, clientsLoading, feedback, setValue]);
+
   useEffect(() => {
     if (isOpen) {
+      console.log('Modal opened, fetching clients...');
       dispatch(fetchClients());
 
       if (feedback) {
-        setValue('client', feedback.client?._id || '');
+        console.log('Setting feedback data:', feedback);
         setValue('lead', feedback.lead || 'Green');
         setValue('products', feedback.products || '');
         setValue('quantity', feedback.quantity || 1);
         setValue('notes', feedback.notes || '');
-        setSelectedClient(feedback.client?._id || '');
 
+        // Set audio data for existing feedback
         if (feedback.audio?.key) {
-          setAudioUrl(feedback.audio.url);
+          console.log('Setting existing audio:', feedback.audio);
+          setValue('audio', {
+            key: feedback.audio.key,
+            originalName: feedback.audio.originalName || 'existing-audio'
+          });
+          setAudioUrl('existing-audio'); // Set a flag to show audio exists
         }
       } else {
         reset();
@@ -71,6 +91,7 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
   }, [isOpen, feedback, dispatch, setValue, reset]);
 
   const handleClientChange = (clientId) => {
+    console.log('Client changed to:', clientId);
     setSelectedClient(clientId);
     setValue('client', clientId);
   };
@@ -166,21 +187,32 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
     }
   };
 
-  const playAudio = () => {
-    if (audioUrl) {
+  const playAudio = async () => {
+    // Don't play if audioUrl is just a flag for existing audio
+    if (audioUrl === 'existing-audio') {
+      toast.error('Cannot play existing audio in edit mode. Use the play button in the feedback list.');
+      return;
+    }
+
+    if (audioUrl && audioUrl !== 'existing-audio') {
       if (audioElement) {
         audioElement.pause();
         setAudioElement(null);
         setIsPlaying(false);
       } else {
-        const audio = new Audio(audioUrl);
-        audio.onended = () => {
-          setIsPlaying(false);
-          setAudioElement(null);
-        };
-        audio.play();
-        setAudioElement(audio);
-        setIsPlaying(true);
+        try {
+          const audio = new Audio(audioUrl);
+          audio.onended = () => {
+            setIsPlaying(false);
+            setAudioElement(null);
+          };
+          await audio.play();
+          setAudioElement(audio);
+          setIsPlaying(true);
+        } catch (error) {
+          console.error('Audio play error:', error);
+          toast.error('Failed to play audio: ' + error.message);
+        }
       }
     }
   };
@@ -414,19 +446,21 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
                   </>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={playAudio}
-                      className="flex items-center gap-2"
-                    >
-                      {isPlaying ? (
-                        <Pause className="h-4 w-4" />
-                      ) : (
-                        <Play className="h-4 w-4" />
-                      )}
-                      {isPlaying ? 'Pause' : 'Play'} Audio
-                    </Button>
+                    {audioUrl !== 'existing-audio' && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={playAudio}
+                        className="flex items-center gap-2"
+                      >
+                        {isPlaying ? (
+                          <Pause className="h-4 w-4" />
+                        ) : (
+                          <Play className="h-4 w-4" />
+                        )}
+                        {isPlaying ? 'Pause' : 'Play'} Audio
+                      </Button>
+                    )}
 
                     <Button
                       type="button"
@@ -441,7 +475,7 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
                 )}
               </div>
 
-              {audioUrl && (
+              {(audioUrl || watchedValues.audio) &&audioUrl !== 'existing-audio' && (
                 <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
                   {isUploading ? (
                     <div className="flex items-center gap-2">
@@ -451,7 +485,7 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
                   ) : watchedValues.audio ? (
                     <div className="flex items-center gap-2 text-green-600">
                       <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      Audio uploaded successfully
+                      {audioUrl === 'existing-audio' ? '' : 'Audio uploaded successfully'}
                     </div>
                   ) : (
                     <div className="flex items-center gap-2 text-yellow-600">

@@ -310,11 +310,10 @@ const FeedbackManagement = () => {
                   feedbacks.map((feedback) => (
                     <TableRow key={feedback._id}>
                       <TableCell className="font-medium px-4 py-3">
-                        <div className="flex items-center space-x-2">
-                          <User className="h-4 w-4 text-gray-500" />
+                        <div className="flex flex-col items-left space-x-2">
                           <div>
                             <div className="text-sm font-medium text-gray-900 truncate">
-                              {feedback.client?.name || 'Unknown Client'}
+                              {feedback.client?.name || 'Unknown Client'} - {feedback.client?.company || ''}
                             </div>
                             <div className="text-xs text-gray-500 truncate">
                               {feedback.client?.phone || ''}
@@ -358,7 +357,7 @@ const FeedbackManagement = () => {
                       <TableCell className="text-right px-4 py-3">
                         <div className="flex items-center justify-end space-x-0.5">
                           {feedbackToDelete && feedbackToDelete._id === feedback._id ? (
-                            // Show confirmation buttons
+                           
                             <>
                               <Button
                                 variant="outline"
@@ -380,25 +379,24 @@ const FeedbackManagement = () => {
                               </Button>
                             </>
                           ) : (
-                            // Show action buttons
                             <>
-                              <Button
+                             <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleEditFeedback(feedback)}
-                                className="h-7 w-7 p-0 text-gray-600 hover:text-gray-900"
+                                className="h-7 w-7 p-0 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50"
                                 title="Edit feedback"
                               >
-                                <Edit className="h-3 w-3" />
+                                <Edit className="h-4 w-4" />
                               </Button>
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleDeleteFeedback(feedback)}
-                                className="h-7 w-7 p-0 text-red-600 hover:text-red-900"
+                                className="h-7 w-7 p-0 text-red-600 hover:text-red-900 hover:bg-red-50"
                                 title="Delete feedback"
                               >
-                                <Trash2 className="h-3 w-3" />
+                                <Trash2 className="h-4 w-4" />
                               </Button>
                             </>
                           )}
