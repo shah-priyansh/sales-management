@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const Area = require('../models/Area');
 const Client = require('../models/Client');
+const ClientFeedback = require('../models/ClientFeedback');
 
 // Generate a readable temporary password
 const generateReadablePassword = () => {
@@ -21,6 +22,7 @@ const getDashboard = async (req, res) => {
     const totalSalesmen = await User.countDocuments({ role: 'salesman', isActive: true });
     const totalClients = await Client.countDocuments({ isActive: true });
     const totalAreas = await Area.countDocuments({ isActive: true });
+    const totalInquiries = await ClientFeedback.countDocuments();
 
     const recentSalesmen = await User.find({ role: 'salesman' })
       .select('firstName lastName email area lastLogin phone createdAt')
@@ -34,14 +36,23 @@ const getDashboard = async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(5);
 
+    const recentInquiries = await ClientFeedback.find()
+      .select('client lead products quantity audio notes createdBy createdAt')
+      .populate('client', 'name company phone')
+      .populate('createdBy', 'firstName lastName')
+      .sort({ createdAt: -1 })
+      .limit(5);
+
     res.json({
       stats: {
         totalSalesmen,
         totalClients,
-        totalAreas
+        totalAreas,
+        totalInquiries
       },
       recentSalesmen,
-      recentClients
+      recentClients,
+      recentInquiries
     });
   } catch (error) {
     console.error('Dashboard error:', error);

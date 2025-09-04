@@ -34,9 +34,11 @@ const initialState = {
     totalSalesmen: 0,
     totalClients: 0,
     totalAreas: 0,
+    totalInquiries: 0,
   },
   recentSalesmen: [],
   recentClients: [],
+  recentInquiries: [],
   salesmenStats: {
     totalClients: 0,
     statusCounts: {},
@@ -57,9 +59,11 @@ const dashboardSlice = createSlice({
         totalSalesmen: 0,
         totalClients: 0,
         totalAreas: 0,
+        totalInquiries: 0,
       };
       state.recentSalesmen = [];
       state.recentClients = [];
+      state.recentInquiries = [];
       state.salesmenStats = {
         totalClients: 0,
         statusCounts: {},
@@ -78,6 +82,7 @@ const dashboardSlice = createSlice({
         state.stats = action.payload.stats;
         state.recentSalesmen = action.payload.recentSalesmen;
         state.recentClients = action.payload.recentClients;
+        state.recentInquiries = action.payload.recentInquiries;
         state.error = null;
       })
       .addCase(fetchDashboardData.rejected, (state, action) => {
@@ -114,6 +119,7 @@ export const selectDashboardError = (state) => state.dashboard.error;
 export const selectDashboardStats = (state) => state.dashboard.stats;
 export const selectRecentSalesmen = (state) => state.dashboard.recentSalesmen;
 export const selectRecentClients = (state) => state.dashboard.recentClients;
+export const selectRecentInquiries = (state) => state.dashboard.recentInquiries;
 export const selectSalesmenStats = (state) => state.dashboard.salesmenStats;
 
 export default dashboardSlice.reducer;
