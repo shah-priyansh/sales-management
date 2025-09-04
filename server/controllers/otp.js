@@ -1,9 +1,9 @@
 const { validationResult } = require('express-validator');
 const Otp = require('../models/Otp');
 const Client = require('../models/Client');
+const whatsappService = require('../services/whatsappService');
+const smsService = require('../services/smsService');
 
-// @desc    Send OTP to client
-// @access  Public
 const sendOTP = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -17,7 +17,6 @@ const sendOTP = async (req, res) => {
 
     const { clientId } = req.body;
 
-    // Check if client exists
     const client = await Client.findById(clientId);
     if (!client) {
       return res.status(404).json({
@@ -26,7 +25,6 @@ const sendOTP = async (req, res) => {
       });
     }
 
-    // Check if client has a phone number
     if (!client.phone) {
       return res.status(400).json({
         success: false,
@@ -34,16 +32,13 @@ const sendOTP = async (req, res) => {
       });
     }
 
-    // Generate new OTP
     const otpCode = Otp.generateOTP();
 
-    // Invalidate any existing OTPs for this client
     await Otp.updateMany(
       { client: clientId, isUsed: false },
       { isUsed: true }
     );
 
-    // Create new OTP
     const otp = new Otp({
       client: clientId,
       otp: otpCode,
@@ -52,19 +47,68 @@ const sendOTP = async (req, res) => {
 
     await otp.save();
 
-    // TODO: Integrate with SMS service (Twilio, AWS SNS, etc.)
-    console.log(`OTP for client ${client.name} (${client.phone}): ${otpCode}`);
+    const whatsappResult = await whatsappService.sendOTP(
+      client.phone,
+      otpCode,
+      client.name
+    );
 
-    res.json({
-      success: true,
-      message: 'OTP sent successfully',
-      data: {
-        clientId: client._id,
-        clientName: client.name,
-        phone: client.phone,
-        expiresIn: '5 minutes'
+    if (whatsappResult.success) {
+      console.log(`WhatsApp OTP sent successfully to ${client.name} (${client.phone}): ${otpCode}`);
+      
+      res.json({
+        success: true,
+        message: 'OTP sent successfully via WhatsApp',
+        data: {
+          clientId: client._id,
+          clientName: client.name,
+          phone: client.phone,
+          expiresIn: '5 minutes',
+          deliveryMethod: 'WhatsApp',
+          messageSid: whatsappResult.messageSid
+        }
+      });
+    } else {
+      console.error(`WhatsApp OTP failed for ${client.name} (${client.phone}):`, whatsappResult.error);
+      
+      console.log('Trying SMS as fallback...');
+      const smsResult = await smsService.sendOTP(client.phone, otpCode, client.name);
+      
+      if (smsResult.success) {
+        console.log(`SMS OTP sent successfully to ${client.name} (${client.phone}): ${otpCode}`);
+        
+        res.json({
+          success: true,
+          message: 'OTP sent successfully via SMS (WhatsApp failed)',
+          data: {
+            clientId: client._id,
+            clientName: client.name,
+            phone: client.phone,
+            expiresIn: '5 minutes',
+            deliveryMethod: 'SMS',
+            messageSid: smsResult.messageSid,
+            whatsappError: whatsappResult.error
+          }
+        });
+      } else {
+        console.error(`SMS OTP also failed for ${client.name} (${client.phone}):`, smsResult.error);
+        
+        res.json({
+          success: true,
+          message: 'OTP generated successfully (Both WhatsApp and SMS failed)',
+          data: {
+            clientId: client._id,
+            clientName: client.name,
+            phone: client.phone,
+            expiresIn: '5 minutes',
+            deliveryMethod: 'Manual',
+            otp: otpCode,
+            whatsappError: whatsappResult.error,
+            smsError: smsResult.error
+          }
+        });
       }
-    });
+    }
 
   } catch (error) {
     console.error('Send OTP error:', error);
@@ -75,8 +119,6 @@ const sendOTP = async (req, res) => {
   }
 };
 
-// @desc    Verify OTP
-// @access  Public
 const verifyOTP = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -90,7 +132,6 @@ const verifyOTP = async (req, res) => {
 
     const { clientId, otp } = req.body;
 
-    // Find the most recent valid OTP for this client
     const otpRecord = await Otp.findOne({
       client: clientId,
       otp: otp,
@@ -104,11 +145,9 @@ const verifyOTP = async (req, res) => {
       });
     }
 
-    // Check if OTP is still valid
     if (!otpRecord.isValid()) {
-      // Mark as used if expired or max attempts reached
       otpRecord.isUsed = true;
-      await otpRecord.save();
+      await otpRecord.save();   
 
       return res.status(400).json({
         success: false,
@@ -116,10 +155,8 @@ const verifyOTP = async (req, res) => {
       });
     }
 
-    // Increment attempts
     otpRecord.attempts += 1;
 
-    // Check if OTP matches
     if (otpRecord.otp !== otp) {
       await otpRecord.save();
       
@@ -130,11 +167,9 @@ const verifyOTP = async (req, res) => {
       });
     }
 
-    // OTP is valid - mark as used
     otpRecord.isUsed = true;
     await otpRecord.save();
 
-    // Get client details
     const client = await Client.findById(clientId);
 
     res.json({
@@ -157,8 +192,6 @@ const verifyOTP = async (req, res) => {
   }
 };
 
-// @desc    Resend OTP to client
-// @access  Public
 const resendOTP = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -172,7 +205,6 @@ const resendOTP = async (req, res) => {
 
     const { clientId } = req.body;
 
-    // Check if client exists
     const client = await Client.findById(clientId);
     if (!client) {
       return res.status(404).json({
@@ -181,7 +213,6 @@ const resendOTP = async (req, res) => {
       });
     }
 
-    // Check if client has a phone number
     if (!client.phone) {
       return res.status(400).json({
         success: false,
@@ -189,14 +220,12 @@ const resendOTP = async (req, res) => {
       });
     }
 
-    // Check if there's an active OTP
     const existingOTP = await Otp.findOne({
       client: clientId,
       isUsed: false
     }).sort({ createdAt: -1 });
 
     if (existingOTP && existingOTP.isValid()) {
-      // Check if enough time has passed since last OTP (minimum 30 seconds)
       const timeSinceLastOTP = new Date() - existingOTP.createdAt;
       const minInterval = 30 * 1000; // 30 seconds
 
@@ -209,16 +238,13 @@ const resendOTP = async (req, res) => {
       }
     }
 
-    // Generate new OTP
     const otpCode = Otp.generateOTP();
 
-    // Invalidate any existing OTPs for this client
     await Otp.updateMany(
       { client: clientId, isUsed: false },
       { isUsed: true }
     );
 
-    // Create new OTP
     const otp = new Otp({
       client: clientId,
       otp: otpCode,
@@ -227,19 +253,45 @@ const resendOTP = async (req, res) => {
 
     await otp.save();
 
-    // TODO: Integrate with SMS service (Twilio, AWS SNS, etc.)
-    console.log(`Resent OTP for client ${client.name} (${client.phone}): ${otpCode}`);
+      
+    const whatsappResult = await whatsappService.sendOTP(
+      client.phone,
+      otpCode,
+      client.name
+    );
 
-    res.json({
-      success: true,
-      message: 'OTP resent successfully',
-      data: {
-        clientId: client._id,
-        clientName: client.name,
-        phone: client.phone,
-        expiresIn: '5 minutes'
-      }
-    });
+    if (whatsappResult.success) {
+      console.log(`WhatsApp OTP resent successfully to ${client.name} (${client.phone}): ${otpCode}`);
+      
+      res.json({
+        success: true,
+        message: 'OTP resent successfully via WhatsApp',
+        data: {
+          clientId: client._id,
+          clientName: client.name,
+          phone: client.phone,
+          expiresIn: '5 minutes',
+          deliveryMethod: 'WhatsApp',
+          messageSid: whatsappResult.messageSid
+        }
+      });
+    } else {
+      console.error(`WhatsApp OTP resend failed for ${client.name} (${client.phone}):`, whatsappResult.error);
+      
+      res.json({
+        success: true,
+        message: 'OTP regenerated successfully (WhatsApp delivery failed)',
+        data: {
+          clientId: client._id,
+          clientName: client.name,
+          phone: client.phone,
+          expiresIn: '5 minutes',
+          deliveryMethod: 'WhatsApp (Failed)',
+          otp: otpCode, // Include OTP in response for testing
+          whatsappError: whatsappResult.error
+        }
+      });
+    }
 
   } catch (error) {
     console.error('Resend OTP error:', error);

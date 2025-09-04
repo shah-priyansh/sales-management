@@ -3,8 +3,6 @@ const Client = require('../models/Client');
 const Area = require('../models/Area');
 const User = require('../models/User');
 
-// @desc    Create new client
-// @access  Private (Admin only)
 const createClient = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -14,7 +12,6 @@ const createClient = async (req, res) => {
 
     const { name, company, email, phone, address, area, status, notes } = req.body;
 
-    // Check if area exists
     const areaExists = await Area.findById(area);
     if (!areaExists) {
       return res.status(400).json({ message: 'Area not found' });
@@ -42,15 +39,12 @@ const createClient = async (req, res) => {
   }
 };
 
-// @desc    Get all clients (admin) or area-specific clients (salesman)
-// @access  Private
 const getClients = async (req, res) => {
   try {
     const { area, status, search, page = 1, limit = 20 } = req.query;
     
     let query = {  };
     
-    // If salesman, only show clients from their area
     if (req.user?.role === 'salesman') {
       query.area = req.user.area;
       query.isActive = true;
@@ -88,15 +82,12 @@ const getClients = async (req, res) => {
   }
 };
 
-// @desc    Get client by ID
-// @access  Private
 const getClientById = async (req, res) => {
   try {
     const { id } = req.params;
     
     let query = { _id: id, isActive: true };
     
-    // If salesman, only show clients from their area
     if (req.user.role === 'salesman') {
       query.area = req.user.area;
     }
@@ -115,8 +106,6 @@ const getClientById = async (req, res) => {
   }
 };
 
-// @desc    Update client
-// @access  Private (Admin only)
 const updateClient = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -127,7 +116,6 @@ const updateClient = async (req, res) => {
     const { id } = req.params;
     const updateData = req.body;
 
-    // Check if area exists if updating area
     if (updateData.area) {
       const areaExists = await Area.findById(updateData.area);
       if (!areaExists) {
@@ -153,8 +141,6 @@ const updateClient = async (req, res) => {
   }
 };
 
-// @desc    Delete client (soft delete)
-// @access  Private (Admin only)
 const deleteClient = async (req, res) => {
   try {
     const { id } = req.params;
@@ -176,8 +162,6 @@ const deleteClient = async (req, res) => {
   }
 };
 
-// @desc    Assign salesman to client
-// @access  Private (Admin only)
 const assignSalesman = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -188,7 +172,6 @@ const assignSalesman = async (req, res) => {
     const { id } = req.params;
     const { salesmanId } = req.body;
 
-    // Check if salesman exists and is active
     const salesman = await User.findById(salesmanId);
     if (!salesman || salesman.role !== 'salesman' || !salesman.isActive) {
       return res.status(400).json({ message: 'Invalid salesman' });
@@ -210,8 +193,7 @@ const assignSalesman = async (req, res) => {
   }
 };
 
-// @desc    Toggle client status (active/inactive)
-// @access  Private (Admin only)
+    
 const toggleClientStatus = async (req, res) => {
   try {
     const { id } = req.params;

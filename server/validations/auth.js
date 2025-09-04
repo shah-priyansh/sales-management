@@ -1,4 +1,3 @@
-const { body, validationResult } = require('express-validator');
 
 const validateLogin = (data) => {
     // Check if required fields exist

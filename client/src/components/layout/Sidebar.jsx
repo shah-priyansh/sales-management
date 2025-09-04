@@ -1,4 +1,4 @@
-import { Home, LogOut, MapPin, UserCheck, Users, X } from 'lucide-react';
+import { Home, LogOut, MapPin, MessageCircle, UserCheck, Users, X } from 'lucide-react';
 import { useDispatch } from 'react-redux';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { logoutUser } from '../../store/slices/authSlice';
@@ -19,6 +19,7 @@ const Sidebar = ({ open, setOpen }) => {
     { name: 'Clients', href: '/clients', icon: UserCheck, adminOnly: true },
     { name: 'Employees', href: '/employees', icon: Users, adminOnly: true },
     { name: 'Areas', href: '/areas', icon: MapPin, adminOnly: true },
+    { name: 'Feedback', href: '/feedback', icon: MessageCircle, adminOnly: true },
   ];
 
   const isActive = (href) => {

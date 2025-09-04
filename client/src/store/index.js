@@ -6,7 +6,7 @@ import dashboardReducer from './slices/dashboardSlice';
 import authReducer from './slices/authSlice';
 import stateReducer from './slices/stateSlice';
 import cityReducer from './slices/citySlice';
-
+import feedbackReducer from './slices/feedbackSlice';
 export const store = configureStore({
   reducer: {
     auth: authReducer,
@@ -16,6 +16,7 @@ export const store = configureStore({
     dashboard: dashboardReducer,
     states: stateReducer,
     cities: cityReducer,
+    feedback: feedbackReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

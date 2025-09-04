@@ -46,30 +46,30 @@ const seedData = async () => {
         await City.deleteMany({});
         console.log('Cleared existing data');
 
-            // Create states with unique codes
-    const states = [];
-    const stateCodes = new Set();
-    
-    for (const [stateName, cities] of Object.entries(indiaData)) {
-      let stateCode = stateName.replace(/\s+/g, '').substring(0, 3).toUpperCase();
-      
-      // Handle duplicate codes
-      let counter = 1;
-      while (stateCodes.has(stateCode)) {
-        stateCode = stateName.replace(/\s+/g, '').substring(0, 2).toUpperCase() + counter;
-        counter++;
-      }
-      
-      stateCodes.add(stateCode);
-      
-      const state = new State({
-        name: stateName,
-        code: stateCode
-      });
-      await state.save();
-      states.push(state);
-      console.log(`Created state: ${stateName} (${stateCode})`);
-    }
+        // Create states with unique codes
+        const states = [];
+        const stateCodes = new Set();
+
+        for (const [stateName, cities] of Object.entries(indiaData)) {
+            let stateCode = stateName.replace(/\s+/g, '').substring(0, 3).toUpperCase();
+
+            // Handle duplicate codes
+            let counter = 1;
+            while (stateCodes.has(stateCode)) {
+                stateCode = stateName.replace(/\s+/g, '').substring(0, 2).toUpperCase() + counter;
+                counter++;
+            }
+
+            stateCodes.add(stateCode);
+
+            const state = new State({
+                name: stateName,
+                code: stateCode
+            });
+            await state.save();
+            states.push(state);
+            console.log(`Created state: ${stateName} (${stateCode})`);
+        }
 
         // Create cities
         for (const [stateName, cityNames] of Object.entries(indiaData)) {
