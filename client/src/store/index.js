@@ -7,6 +7,7 @@ import authReducer from './slices/authSlice';
 import stateReducer from './slices/stateSlice';
 import cityReducer from './slices/citySlice';
 import feedbackReducer from './slices/feedbackSlice';
+import productReducer from './slices/productSlice';
 export const store = configureStore({
   reducer: {
     auth: authReducer,
@@ -17,6 +18,7 @@ export const store = configureStore({
     states: stateReducer,
     cities: cityReducer,
     feedback: feedbackReducer,
+    products: productReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

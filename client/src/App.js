@@ -7,6 +7,7 @@ import Dashboard from './components/Dashboard';
 import Login from './components/Login';
 import EmployeeManagement from './components/Employee/EmployeeManagement';
 import Layout from './components/layout/Layout';
+import { ProductManagement } from './components/Product';
 import {
   ProtectedRoute,
   PublicRoute,
@@ -84,6 +85,14 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute allowedRoles={['admin']}>
               <AreaManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="products"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <ProductManagement />
             </ProtectedRoute>
           }
         />
