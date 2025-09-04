@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import { createProduct, updateProduct, clearError } from '../../store/slices/productSlice';
 import { Button, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Input, Switch } from '../ui';
 
-const AddProductModal = ({ isOpen, onClose, product = null }) => {
+const AddProductModal = ({ isOpen, onClose, product = null, onSuccess }) => {
   const dispatch = useDispatch();
 
   const {
@@ -44,6 +44,9 @@ const AddProductModal = ({ isOpen, onClose, product = null }) => {
       } else {
         await dispatch(createProduct(data)).unwrap();
         toast.success('Product created successfully');
+      }
+      if (onSuccess) {
+        onSuccess();
       }
       onClose();
     } catch (error) {

@@ -1,4 +1,4 @@
-import { Package, Edit, Trash2, Plus, Search, Filter, Calendar, CheckCircle, XCircle } from 'lucide-react';
+import { Package, Edit, Trash2, Plus, CheckCircle, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
@@ -18,6 +18,7 @@ import {
     Card,
     CardContent,
     EmptyTable,
+    ErrorTable,
     LoadingTable,
     Pagination,
     SearchInput,
@@ -34,91 +35,128 @@ const ProductManagement = () => {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState(null);
+    const [productToDelete, setProductToDelete] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState('all');
+    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [isSearching, setIsSearching] = useState(false);
 
     const dispatch = useDispatch();
     const products = useSelector(selectProducts);
     const productsLoading = useSelector(selectProductsLoading);
     const productsError = useSelector(selectProductsError);
     const pagination = useSelector(selectProductsPagination);
+    console.log('pagination', pagination);
+
+    useEffect(() => {
+        if (searchTerm !== debouncedSearchTerm) {
+            setIsSearching(true);
+        }
+
+        const timer = setTimeout(() => {
+            setDebouncedSearchTerm(searchTerm);
+            setIsSearching(false);
+        }, 500); // 500ms delay
+
+        return () => {
+            clearTimeout(timer);
+            setIsSearching(false);
+        };
+    }, [searchTerm, debouncedSearchTerm]);
+
+    useEffect(() => {
+        if (debouncedSearchTerm !== searchTerm) {
+            setCurrentPage(1);
+        }
+    }, [debouncedSearchTerm, searchTerm]);
 
     useEffect(() => {
         dispatch(fetchProducts({
-            page: pagination.currentPage,
-            search: searchTerm,
-            isActive: statusFilter === 'all' ? undefined : statusFilter === 'active'
+            page: currentPage,
+            search: debouncedSearchTerm,
+            limit: 20
         }));
-    }, [dispatch, pagination.currentPage, searchTerm, statusFilter]);
+    }, [dispatch, currentPage, debouncedSearchTerm]);
 
-    const handleSearch = (value) => {
-        setSearchTerm(value);
-        dispatch(setCurrentPage(1));
+    const handleAddProductSuccess = () => {
+        setIsAddModalOpen(false);
     };
 
-    const handleStatusFilter = (status) => {
-        setStatusFilter(status);
-        dispatch(setCurrentPage(1));
-    };
-
-    const handleEdit = (product) => {
+    const handleEditProduct = (product) => {
         setSelectedProduct(product);
         setIsEditModalOpen(true);
     };
 
-    const handleDelete = async (product) => {
-        if (window.confirm(`Are you sure you want to delete "${product.productName}"?`)) {
+    const handleEditModalClose = () => {
+        setIsEditModalOpen(false);
+        setSelectedProduct(null);
+    };
+
+    const handleClearSearch = () => {
+        setSearchTerm('');
+        setDebouncedSearchTerm('');
+        setCurrentPage(1);
+    };
+
+    const handleDeleteProduct = (product) => {
+        setProductToDelete(product);
+    };
+
+    const confirmDeleteProduct = async () => {
+        if (productToDelete) {
+            setIsDeleting(true);
             try {
-                await dispatch(deleteProduct(product._id)).unwrap();
-                toast.success('Product deleted successfully');
+                const result = await dispatch(deleteProduct(productToDelete._id));
+                if (deleteProduct.fulfilled.match(result)) {
+                    // Success - product deleted
+                    toast.success(`Product "${productToDelete.productName}" deleted successfully`);
+                    setProductToDelete(null);
+                    
+                    // Refetch products to update the total count and pagination
+                    dispatch(fetchProducts({
+                        page: currentPage,
+                        search: debouncedSearchTerm,
+                        limit: 20
+                    }));
+                } else {
+                    // Error - show error message
+                    const errorMessage = result.error || 'Failed to delete product';
+                    toast.error(errorMessage);
+                }
             } catch (error) {
-                toast.error(error || 'Failed to delete product');
+                console.error('Error deleting product:', error);
+                toast.error('An unexpected error occurred while deleting the product');
+            } finally {
+                setIsDeleting(false);
             }
         }
     };
 
-    const handlePageChange = (page) => {
-        dispatch(setCurrentPage(page));
+    const cancelDeleteProduct = () => {
+        setProductToDelete(null);
+        setIsDeleting(false);
     };
 
     const getStatusBadge = (isActive) => {
         return (
-            <Badge variant={isActive ? 'success' : 'destructive'} >
-                {isActive ? (
-                    <>
-                        Active
-                    </>
-                ) : (
-                    <>
-                        Inactive
-                    </>
-                )}
+            <Badge variant={isActive ? "success" : "destructive"}>
+                {isActive ? 'Active' : 'Inactive'}
             </Badge>
         );
     };
+    return (
+        <div className="max-w-full">
 
-    if (productsError) {
-        return (
-            <div className="p-6">
-                <Card>
-                    <CardContent className="p-6">
-                        <div className="text-center text-red-500">
-                            <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                            <p>Error: {productsError}</p>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-        );
-    }
+            {productsError && (
+                <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
+                    <div className="text-red-800">
+                        <strong>Error:</strong> {typeof productsError === 'string' ? productsError : 'An error occurred'}
+                    </div>
+                </div>
+            )}
 
-    const getStatsCards = () => {
-        const totalProducts = pagination.total || products.length;
-        const activeProducts = products.filter(p => p.status === 'Active').length;
-        const inactiveProducts = products.filter(p => p.status === 'Inactive').length;
-
-        return (
-            <div className="grid grid-cols-1 sm:grid-co ls-2 lg:grid-cols-3 gap-4 md:gap-6 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-6">
                 <Card>
                     <CardContent className="p-6">
                         <div className="flex items-center">
@@ -127,7 +165,7 @@ const ProductManagement = () => {
                             </div>
                             <div className="ml-4">
                                 <p className="text-sm font-medium text-gray-600">Total Products</p>
-                                <p className="text-2xl font-bold text-gray-900">{totalProducts}</p>
+                                <p className="text-2xl font-bold text-gray-900">{pagination.totalItems}</p>
                             </div>
                         </div>
                     </CardContent>
@@ -141,7 +179,9 @@ const ProductManagement = () => {
                             </div>
                             <div className="ml-4">
                                 <p className="text-sm font-medium text-gray-600">Active Products</p>
-                                <p className="text-2xl font-bold text-gray-900">{activeProducts}</p>
+                                <p className="text-2xl font-bold text-gray-900">
+                                    {products.filter(p => p.isActive).length}
+                                </p>
                             </div>
                         </div>
                     </CardContent>
@@ -155,159 +195,189 @@ const ProductManagement = () => {
                             </div>
                             <div className="ml-4">
                                 <p className="text-sm font-medium text-gray-600">Inactive Products</p>
-                                <p className="text-2xl font-bold text-gray-900">{inactiveProducts}</p>
+                                <p className="text-2xl font-bold text-gray-900">
+                                    {products.filter(p => !p.isActive).length}
+                                </p>
                             </div>
                         </div>
                     </CardContent>
                 </Card>
-
-
             </div>
-        );
-    };
-    return (
-        <div className="p-6 space-y-6">
-            {/* Header */}
-            {getStatsCards()}
 
-            {/* Filters */}
-            <Card>
-                <CardContent className="p-4">
-                    <div className="flex flex-col sm:flex-row gap-4">
-                        <div className="flex-1">
-                            <SearchInput
-                                placeholder="Search products..."
-                                value={searchTerm}
-                                onChange={handleSearch}
-                                className="w-full"
-                            />
-                        </div>
-                        <div className="flex gap-2">
-                            <Button
-                                variant={statusFilter === 'active' ? 'default' : 'outline'}
-                                size="sm"
-                                onClick={() => handleStatusFilter('active')}
-                                className="flex items-center gap-2"
-                            >
-                                <CheckCircle className="h-4 w-4" />
-                                Active
-                            </Button>
-                            <Button
-                                variant={statusFilter === 'inactive' ? 'default' : 'outline'}
-                                size="sm"
-                                onClick={() => handleStatusFilter('inactive')}
-                                className="flex items-center gap-2"
-                            >
-                                <XCircle className="h-4 w-4" />
-                                Inactive
-                            </Button>
-                        </div>
-                        <Button onClick={() => setIsAddModalOpen(true)} variant="gradient" size="lg" className="flex items-center gap-2">
-                            <Plus className="h-4 w-4" />
+            <Card className="mb-6">
+                <CardContent className="p-4 md:p-6">
+                    <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between">
+                        <SearchInput
+                            value={searchTerm}
+                            onChange={setSearchTerm}
+                            onClear={handleClearSearch}
+                            placeholder="Search products..."
+                            loading={productsLoading}
+                            searching={isSearching}
+                        />
+                        <Button
+                            onClick={() => setIsAddModalOpen(true)}
+                            variant="gradient"
+                            size="lg"
+                            className="flex items-center gap-2"
+                        >
+                            <Plus className="h-5 w-5" />
                             Add Product
                         </Button>
-
                     </div>
                 </CardContent>
             </Card>
 
-            {/* Products Table */}
             <Card>
                 <CardContent className="p-0">
-                    {productsLoading ? (
-                        <LoadingTable />
-                    ) : products.length === 0 ? (
-                        <EmptyTable
-                            icon={Package}
-                            title="No products found"
-                            description="Get started by adding your first product"
-                            actionText="Add Product"
-                            onAction={() => setIsAddModalOpen(true)}
-                        />
-                    ) : (
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Product Name</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead>Created</TableHead>
-                                    <TableHead>Updated</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
+                    <div className="overflow-auto h-[410px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                        <Table className="w-full table-fixed border-collapse">
+                            <TableHeader className="sticky top-0 bg-white z-30 shadow-lg border-b-2 border-gray-200">
+                                <TableRow className="bg-white hover:bg-white">
+                                    <TableHead className="w-[40%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Product Name</TableHead>
+                                    <TableHead className="w-[15%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Status</TableHead>
+                                    <TableHead className="w-[20%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Created</TableHead>
+                                    <TableHead className="w-[20%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Updated</TableHead>
+                                    <TableHead className="w-[15%] bg-white border-b-0 px-4 py-3 text-right font-semibold text-gray-900">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {products.map((product) => (
-                                    <TableRow key={product._id}>
-                                        <TableCell className="px-4 py-3">
-                                            <div className="flex items-center gap-2">
-                                                <Package className="h-4 w-4 text-gray-400" />
-                                                <span className="font-medium text-gray-900">{product.productName}</span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="px-4 py-3">
-                                            {getStatusBadge(product.isActive)}
-                                        </TableCell>
-                                        <TableCell className="px-4 py-3">
-                                            <div className="flex items-center gap-1 text-sm text-gray-500">
-                                                <Calendar className="h-3 w-3" />
-                                                {formatDate(product.createdAt)}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="px-4 py-3">
-                                            <div className="flex items-center gap-1 text-sm text-gray-500">
-                                                <Calendar className="h-3 w-3" />
-                                                {formatDate(product.updatedAt)}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="px-4 py-3">
-                                            <div className="flex items-center justify-end space-x-1">
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => handleEdit(product)}
-                                                    className="hover:bg-gray-100 rounded"
-                                                >
-                                                    <Edit className="h-4 w-4" />
-                                                </Button>
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => handleDelete(product)}
-                                                    className="hover:bg-red-50 hover:text-red-600 hover:border-red-200 rounded"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </div>
+                                {productsLoading ? (
+                                    <TableRow>
+                                        <TableCell colSpan={5} className="p-0">
+                                            <LoadingTable columns={5} rows={7} className="border-0" />
                                         </TableCell>
                                     </TableRow>
-                                ))}
+                                ) : productsError ? (
+                                    <TableRow>
+                                        <TableCell colSpan={5} className="p-0">
+                                            <ErrorTable
+                                                columns={5}
+                                                message="Failed to load products"
+                                                description="There was an error loading the products. Please try again."
+                                                onRetry={() => dispatch(fetchProducts({ page: currentPage, search: debouncedSearchTerm, limit: 20 }))}
+                                                className="border-0"
+                                            />
+                                        </TableCell>
+                                    </TableRow>
+                                ) : products.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={5} className="p-0">
+                                            <EmptyTable
+                                                columns={5}
+                                                message={debouncedSearchTerm ? 'No products found' : 'No products yet'}
+                                                description={debouncedSearchTerm ? 'No products match your search criteria.' : 'Create your first product to get started.'}
+                                                className="border-0"
+                                            />
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    products.map((product) => (
+                                        <TableRow key={product._id}>
+                                            <TableCell className="font-medium px-4 py-3">
+                                                <div className="text-sm font-medium text-gray-900 truncate">
+                                                    {product.productName}
+                                                </div>
+                                            </TableCell>
+
+                                            <TableCell className="px-4 py-3">
+                                                {getStatusBadge(product.isActive)}
+                                            </TableCell>
+
+                                            <TableCell className="px-4 py-3">
+                                                <span className="text-sm text-gray-900 truncate">{formatDate(product.createdAt)}</span>
+                                            </TableCell>
+
+                                            <TableCell className="px-4 py-3">
+                                                <span className="text-sm text-gray-900 truncate">{formatDate(product.updatedAt)}</span>
+                                            </TableCell>
+
+                                            <TableCell className="text-right px-4 py-3">
+                                                <div className="flex items-center justify-end space-x-0.5">
+                                                    {productToDelete && productToDelete._id === product._id ? (
+                                                        // Show confirmation buttons
+                                                        <>
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={cancelDeleteProduct}
+                                                                disabled={isDeleting}
+                                                                className="h-7 px-2 text-xs text-gray-600 hover:text-gray-900"
+                                                            >
+                                                                Cancel
+                                                            </Button>
+                                                            <Button
+                                                                variant="destructive"
+                                                                size="sm"
+                                                                onClick={confirmDeleteProduct}
+                                                                disabled={isDeleting}
+                                                                className="h-7 px-2 text-xs bg-red-600 hover:bg-red-700 disabled:opacity-50"
+                                                            >
+                                                                {isDeleting ? 'Deleting...' : 'Delete'}
+                                                            </Button>
+                                                        </>
+                                                    ) : (
+                                                        // Show normal action buttons
+                                                        <>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() => handleEditProduct(product)}
+                                                                className="h-7 w-7 p-0 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50"
+                                                                title="Edit product"
+                                                            >
+                                                                <Edit className="h-4 w-4" />
+                                                            </Button>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() => handleDeleteProduct(product)}
+                                                                className="h-7 w-7 p-0 text-red-600 hover:text-red-900 hover:bg-red-50"
+                                                                title="Delete product"
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
                             </TableBody>
                         </Table>
-                    )}
+                    </div>
                 </CardContent>
             </Card>
 
-            {/* Pagination */}
-            {products.length > 0 && (
-                <div className="flex justify-center">
-                    <Pagination
-                        currentPage={pagination.currentPage}
-                        totalPages={pagination.totalPages}
-                        onPageChange={handlePageChange}
-                    />
-                </div>
+            {pagination.totalPages > 1 && (
+                <Card className="mt-2">
+                    <CardContent className="p-0">
+                        <Pagination
+                            currentPage={pagination.currentPage}
+                            totalPages={pagination.totalPages}
+                            total={pagination.totalItems}
+                            limit={pagination.itemsPerPage}
+                            onPageChange={setCurrentPage}
+                            loading={productsLoading}
+                        />
+                    </CardContent>
+                </Card>
             )}
 
-            {/* Modals */}
             <AddProductModal
                 isOpen={isAddModalOpen}
                 onClose={() => setIsAddModalOpen(false)}
+                onSuccess={handleAddProductSuccess}
             />
+
             <AddProductModal
                 isOpen={isEditModalOpen}
-                onClose={() => setIsEditModalOpen(false)}
+                onClose={handleEditModalClose}
+                onSuccess={handleAddProductSuccess}
                 product={selectedProduct}
             />
+
         </div>
     );
 };
