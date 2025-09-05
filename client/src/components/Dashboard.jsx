@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Users, UserCheck, MapPin, TrendingUp, Clock, Plus, MessageCircle, Phone, Mail } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { Users, UserCheck, MapPin, Clock, MessageCircle } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { selectUser } from '../store/slices/authSlice';
@@ -12,12 +12,11 @@ import {
   selectDashboardLoading, 
   selectDashboardError 
 } from '../store/slices/dashboardSlice';
-import { Card, CardContent, Badge } from './ui';
+import { Card, CardContent } from './ui';
 
 const Dashboard = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const user = useSelector(selectUser);
   const stats = useSelector(selectDashboardStats);
   const recentSalesmen = useSelector(selectRecentSalesmen);
   const recentClients = useSelector(selectRecentClients);
@@ -143,16 +142,36 @@ const Dashboard = () => {
               <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-200">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Product</p>
+                  <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Products</p>
                 </div>
-                <p className="text-sm font-bold text-gray-900">{inquiry.products || 'Not specified'}</p>
+                <div className="space-y-1">
+                  {inquiry.products && Array.isArray(inquiry.products) && inquiry.products.length > 0 ? (
+                    inquiry.products.map((productItem, index) => (
+                      <div key={index} className="text-xs bg-white px-2 py-1 rounded border">
+                        <span className="font-medium text-gray-900">
+                          {productItem.product?.productName || 'Unknown Product'}
+                        </span>
+                        <span className="text-gray-600 ml-1">
+                          (Qty: {productItem.quantity})
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm font-bold text-gray-500">No products</p>
+                  )}
+                </div>
               </div>
               <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-xl border border-green-200">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <p className="text-xs font-semibold text-green-600 uppercase tracking-wide">Quantity</p>
+                  <p className="text-xs font-semibold text-green-600 uppercase tracking-wide">Total Quantity</p>
                 </div>
-                <p className="text-sm font-bold text-gray-900">{inquiry.quantity || 0}</p>
+                <p className="text-sm font-bold text-gray-900">
+                  {inquiry.products && Array.isArray(inquiry.products) 
+                    ? inquiry.products.reduce((total, product) => total + (product.quantity || 0), 0)
+                    : 0
+                  }
+                </p>
               </div>
               <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-xl border border-purple-200">
                 <div className="flex items-center gap-2 mb-2">
