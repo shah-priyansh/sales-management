@@ -111,7 +111,7 @@ const createFeedback = async (req, res) => {
 
     const feedbackResponse = await ClientFeedback.findById(feedback._id)
       .populate('client', 'name company phone')
-      .populate('createdBy', 'name email')
+      .populate('createdBy', 'firstName lastName email')
       .populate('products.product', 'productName');
 
     res.status(201).json(feedbackResponse);
@@ -144,7 +144,7 @@ const getAllFeedback = async (req, res) => {
 
     const feedback = await ClientFeedback.find(query)
       .populate('client', 'name company phone area')
-      .populate('createdBy', 'name email')
+      .populate('createdBy', 'firstName lastName email')
       .populate('products.product', 'productName')
       .sort({ date: -1, createdAt: -1 })
       .limit(limit * 1)
@@ -170,7 +170,7 @@ const getFeedbackByClient = async (req, res) => {
 
     const feedback = await ClientFeedback.find({ client, isActive: true })
       .populate('client', 'name company phone area')
-      .populate('createdBy', 'name email')
+      .populate('createdBy', 'firstName lastName email')
       .populate('products.product', 'productName')
       .sort({ date: -1, createdAt: -1 })
       .limit(limit * 1)
@@ -203,7 +203,7 @@ const getFeedbackById = async (req, res) => {
 
     const feedback = await ClientFeedback.findOne(query)
       .populate('client', 'name company phone area')
-      .populate('createdBy', 'name email')
+      .populate('createdBy', 'firstName lastName email')
       .populate('products.product', 'productName');
 
     if (!feedback) {
@@ -248,7 +248,7 @@ const updateFeedback = async (req, res) => {
       updateData,
       { new: true, runValidators: true }
     ).populate('client', 'name company phone area')
-      .populate('createdBy', 'name email')
+      .populate('createdBy', 'firstName lastName email')
       .populate('products.product', 'productName');
 
     res.json(feedback);

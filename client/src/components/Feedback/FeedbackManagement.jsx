@@ -44,6 +44,8 @@ const FeedbackManagement = () => {
   const [isSearching, setIsSearching] = useState(false);
   const dispatch = useDispatch();
   const feedbacks = useSelector(selectFeedbacks);
+  const [showMoreNotes, setShowMoreNotes] = useState(false);
+  console.log('feedbacks', feedbacks);
   const feedbacksLoading = useSelector(selectFeedbacksLoading);
   const feedbacksError = useSelector(selectFeedbacksError);
   const pagination = useSelector(selectFeedbacksPagination);
@@ -270,6 +272,8 @@ const FeedbackManagement = () => {
                   <TableHead className="w-[20%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Client</TableHead>
                   <TableHead className="w-[10%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Lead Status</TableHead>
                   <TableHead className="w-[30%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Products</TableHead>
+                  <TableHead className="w-[20%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Notes</TableHead>
+                  <TableHead className="w-[10%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Created By</TableHead>
                   <TableHead className="w-[10%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Audio</TableHead>
                   <TableHead className="w-[15%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Date</TableHead>
                   <TableHead className="w-[10%] bg-white border-b-0 px-4 py-3 text-right font-semibold text-gray-900">Actions</TableHead>
@@ -342,6 +346,21 @@ const FeedbackManagement = () => {
                             <span className="text-sm text-gray-500">No products</span>
                           )}
                         </div>
+                      </TableCell>
+
+                      <TableCell className="px-4 py-3">
+                        {feedback.notes && feedback.notes.length > 30 && !showMoreNotes ? (
+                          <span className="text-gray-400 text-sm cursor-pointer" onClick={() => setShowMoreNotes(true)}>
+                            {feedback.notes.substring(0, 30)}... Read More
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 text-sm cursor-pointer" onClick={() => setShowMoreNotes(false)}>{feedback.notes} Read Less</span>
+                        )}
+
+                      </TableCell>
+
+                      <TableCell className="px-4 py-3">
+                        {feedback.createdBy?.firstName || 'Unknown'} {feedback.createdBy?.lastName || ''}
                       </TableCell>
 
                       <TableCell className="px-4 py-3">

@@ -1,18 +1,17 @@
 import React, { useEffect } from 'react';
-import { Users, UserCheck, MapPin, Clock, MessageCircle } from 'lucide-react';
+import { Users, UserCheck, MapPin, Clock, MessageCircle, Music } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { selectUser } from '../store/slices/authSlice';
-import { 
-  fetchDashboardData, 
-  selectDashboardStats, 
-  selectRecentSalesmen, 
-  selectRecentClients, 
+import {
+  fetchDashboardData,
+  selectDashboardStats,
+  selectRecentSalesmen,
+  selectRecentClients,
   selectRecentInquiries,
-  selectDashboardLoading, 
-  selectDashboardError 
+  selectDashboardLoading,
+  selectDashboardError
 } from '../store/slices/dashboardSlice';
-import { Card, CardContent } from './ui';
+import { Button, Card, CardContent } from './ui';
 
 const Dashboard = () => {
   const dispatch = useDispatch();
@@ -84,132 +83,102 @@ const Dashboard = () => {
   );
 
   const InquiryItem = ({ inquiry }) => {
-    const getStatusColor = (lead) => {
-      switch (lead) {
-        case 'Green':
-          return 'bg-gradient-to-r from-green-400 to-green-500 text-white shadow-green-200';
-        case 'Red':
-          return 'bg-gradient-to-r from-red-400 to-red-500 text-white shadow-red-200';
-        case 'Orange':
-          return 'bg-gradient-to-r from-orange-400 to-orange-500 text-white shadow-orange-200';
-        default:
-          return 'bg-gradient-to-r from-gray-400 to-gray-500 text-white shadow-gray-200';
-      }
-    };
 
-    const getStatusIcon = (lead) => {
+    const getStatusBorderColor = (lead) => {
       switch (lead) {
         case 'Green':
-          return '✓';
+          return 'border-l-green-500';
         case 'Red':
-          return '✗';
+          return 'border-l-red-500';
         case 'Orange':
-          return '!';
+          return 'border-l-orange-500';
         default:
-          return '?';
+          return 'border-l-gray-100';
       }
     };
 
     return (
-      <div className="bg-white rounded-xl p-5 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-gray-200">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="relative">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 rounded-full flex items-center justify-center shadow-lg">
-                  <span className="text-white font-bold text-lg">
+      <Card className={`border-l-2 ${getStatusBorderColor(inquiry.lead)}`}>
+        <CardContent className="p-5 ">
+          <div className={`flex items-center justify-between mb-2 pb-2`}>
+            <div className="flex items-center gap-2">
+              <div className="flex-shrink-0 ">
+                <div className="h-8 w-8 rounded-full flex items-center justify-center bg-blue-100">
+                  <span className="text-xs font-medium text-blue-600">
                     {inquiry.client?.name?.charAt(0) || 'U'}
                   </span>
                 </div>
-                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-white rounded-full border-2 border-white"></div>
               </div>
-              <div className="flex-1">
-                <h4 className="text-xl font-bold text-gray-900 mb-2">{inquiry.client?.name || 'Unknown Client'}</h4>
-                <div className="flex items-center gap-3">
-                  <span className={`px-3 py-1.5 rounded-full text-sm font-semibold shadow-sm ${getStatusColor(inquiry.lead)}`}>
-                    {getStatusIcon(inquiry.lead)} {inquiry.lead}
-                  </span>
-                  {inquiry.audio?.key && (
-                    <span className="px-3 py-1.5 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 rounded-full text-sm font-medium border border-blue-200">
-                      🎵 Audio Available
-                    </span>
-                  )}
-                </div>
+              <div className="min-w-0 flex-1">
+                <h4 className="font-semibold text-gray-900 text-sm truncate">{inquiry.client?.name || 'Unknown Client'}</h4>
+                <p className="text-xs text-gray-500 truncate">{inquiry.client?.company || 'No company'}</p>
               </div>
             </div>
-            
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-200">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Products</p>
-                </div>
-                <div className="space-y-1">
-                  {inquiry.products && Array.isArray(inquiry.products) && inquiry.products.length > 0 ? (
-                    inquiry.products.map((productItem, index) => (
-                      <div key={index} className="text-xs bg-white px-2 py-1 rounded border">
-                        <span className="font-medium text-gray-900">
-                          {productItem.product?.productName || 'Unknown Product'}
-                        </span>
-                        <span className="text-gray-600 ml-1">
-                          (Qty: {productItem.quantity})
-                        </span>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm font-bold text-gray-500">No products</p>
-                  )}
-                </div>
-              </div>
-              <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-xl border border-green-200">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <p className="text-xs font-semibold text-green-600 uppercase tracking-wide">Total Quantity</p>
-                </div>
-                <p className="text-sm font-bold text-gray-900">
-                  {inquiry.products && Array.isArray(inquiry.products) 
+            <div className="flex items-center gap-2">
+              {inquiry.audio?.key && (
+                <Music className="h-6 w-6 text-blue-600" />
+              )}
+            </div>
+          </div>
+
+          <div className={`mb-2 border-b border-gray-100 pb-2 ${getStatusBorderColor(inquiry.lead)}`}>
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
+              <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Products</span>
+            </div>
+            <div className="space-y-1">
+              {inquiry.products && Array.isArray(inquiry.products) && inquiry.products.length > 0 ? (
+                inquiry.products.slice(0, 1).map((productItem, index) => (
+                  <div key={index} className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-lg">
+                    <span className="font-medium text-gray-800 text-xs truncate">
+                      {productItem.product?.productName || 'Unknown Product'}
+                    </span>
+                    <span className="bg-gray-600 text-white px-2 py-1 rounded-full font-medium text-xs">
+                      {productItem.quantity}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-xs text-gray-500 italic bg-gray-50 px-3 py-2 rounded-lg">No products</p>
+              )}
+              {inquiry.products && inquiry.products.length > 1 && (
+                <p className="text-xs text-gray-600 font-medium bg-gray-100 px-2 py-1 rounded-full text-center">+{inquiry.products.length - 1} more</p>
+              )}
+            </div>
+          </div>
+
+          <div className={`flex items-center justify-between text-xs text-gray-500 pt-2 border-b border-gray-100 pb-2 ${getStatusBorderColor(inquiry.lead)}`}>
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-1">
+                <div className="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
+                <span className="font-medium">
+                  {inquiry.products && Array.isArray(inquiry.products)
                     ? inquiry.products.reduce((total, product) => total + (product.quantity || 0), 0)
                     : 0
                   }
-                </p>
-              </div>
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-xl border border-purple-200">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                  <p className="text-xs font-semibold text-purple-600 uppercase tracking-wide">Created by</p>
-                </div>
-                <p className="text-sm font-bold text-gray-900">
-                  {inquiry.createdBy ? `${inquiry.createdBy.firstName} ${inquiry.createdBy.lastName}` : 'Unknown'}
-                </p>
-              </div>
-              <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-xl border border-orange-200">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                  <p className="text-xs font-semibold text-orange-600 uppercase tracking-wide">Date</p>
-                </div>
-                <p className="text-sm font-bold text-gray-900">
-                  {new Date(inquiry.createdAt).toLocaleDateString()}
-                </p>
-              </div>
+                </span>
+              </span>
+              <span className="flex items-center gap-1">
+                <div className="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
+                <span className="font-medium truncate">
+                  {inquiry.createdBy ? inquiry.createdBy.firstName : 'Unknown'}
+                </span>
+              </span>
             </div>
-            
-            {inquiry.notes && (
-              <div className="mt-4 bg-gradient-to-br from-gray-50 to-gray-100 p-4 rounded-xl border border-gray-200">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
-                  <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Notes</p>
-                </div>
-                <p className="text-sm text-gray-700 leading-relaxed">
-                  {inquiry.notes.length > 120 
-                    ? inquiry.notes.substring(0, 120) + '...' 
-                    : inquiry.notes
-                  }
-                </p>
-              </div>
-            )}
+            <span className="text-gray-400 font-medium">
+              {new Date(inquiry.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            </span>
           </div>
-        </div>
-      </div>
+
+          {inquiry.notes && inquiry.notes.length <= 30 && (
+            <div className="mt-2 pt-1">
+              <p className="text-xs text-gray-700 font-medium px-3 py-2 rounded-lg">
+                {inquiry.notes}
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     );
   };
 
@@ -237,7 +206,7 @@ const Dashboard = () => {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <p className="text-red-600 mb-4">Failed to load dashboard data</p>
-          <button 
+          <button
             onClick={() => dispatch(fetchDashboardData())}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
@@ -250,13 +219,13 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
-  
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
-          title="Total Salesmen"
-          value={stats?.totalSalesmen || 0}
-          icon={Users}
-          color="primary"
+          title="Total Inquiries"
+          value={stats?.totalInquiries || 0}
+          icon={MessageCircle}
+          color="purple"
         />
         <StatCard
           title="Total Clients"
@@ -265,40 +234,42 @@ const Dashboard = () => {
           color="green"
         />
         <StatCard
+          title="Total Salesmen"
+          value={stats?.totalSalesmen || 0}
+          icon={Users}
+          color="primary"
+        />
+        <StatCard
           title="Total Areas"
           value={stats?.totalAreas || 0}
           icon={MapPin}
           color="blue"
         />
-        <StatCard
-          title="Total Inquiries"
-          value={stats?.totalInquiries || 0}
-          icon={MessageCircle}
-          color="purple"
-        />
+
       </div>
 
       {/* Recent Inquiries - Prominent Section */}
-      <Card className="border-0 shadow-lg">
+      <Card className="border border-gray-200 shadow-sm">
         <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg">
-                <MessageCircle className="h-7 w-7 text-white" />
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <MessageCircle className="h-6 w-6 text-blue-600" />
               </div>
               <div>
-                <h3 className="text-2xl font-bold text-gray-900">Recent Inquiries</h3>
-                <p className="text-sm text-gray-600 mt-1">Latest customer inquiries and leads</p>
+                <h3 className="text-lg font-semibold text-gray-900">Recent Inquiries</h3>
+                <p className="text-sm text-gray-500">Latest customer inquiries and leads</p>
               </div>
             </div>
-            <button 
+            <Button
               onClick={() => navigate('/inquiries')}
-              className="px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl hover:from-primary-700 hover:to-primary-800 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              variant="gradient"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-medium"
             >
-              View All Inquiries
-            </button>
+              View All
+            </Button>
           </div>
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {recentInquiries.length > 0 ? (
               recentInquiries.map((inquiry) => (
                 <InquiryItem
@@ -307,12 +278,12 @@ const Dashboard = () => {
                 />
               ))
             ) : (
-              <div className="text-center py-12">
-                <div className="p-4 bg-gray-100 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                  <MessageCircle className="h-8 w-8 text-gray-400" />
+              <div className="col-span-full text-center py-8">
+                <div className="p-3 bg-gray-100 rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">
+                  <MessageCircle className="h-6 w-6 text-gray-400" />
                 </div>
-                <p className="text-gray-600 font-medium">No recent inquiries</p>
-                <p className="text-sm text-gray-400 mt-1">Customer inquiries will appear here</p>
+                <p className="text-gray-600 font-medium text-sm">No recent inquiries</p>
+                <p className="text-xs text-gray-400 mt-1">Customer inquiries will appear here</p>
               </div>
             )}
           </div>
@@ -365,7 +336,7 @@ const Dashboard = () => {
         <CardContent className="p-4">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
           <div className="flex flex-row gap-4 max-w-full">
-            <button 
+            <button
               onClick={() => handleQuickAction('salesman')}
               className="group relative overflow-hidden bg-white border-2 border-blue-200 rounded-xl p-3 hover:border-blue-400 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 w-full"
             >
@@ -380,8 +351,8 @@ const Dashboard = () => {
               </div>
               <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-blue-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </button>
-            
-            <button 
+
+            <button
               onClick={() => handleQuickAction('client')}
               className="group relative overflow-hidden bg-white border-2 border-purple-200 rounded-xl p-3 hover:border-purple-400 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 w-full"
             >
@@ -396,8 +367,8 @@ const Dashboard = () => {
               </div>
               <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-purple-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </button>
-            
-            <button 
+
+            <button
               onClick={() => handleQuickAction('area')}
               className="group relative overflow-hidden bg-white border-2 border-green-200 rounded-xl p-3 hover:border-green-400 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 w-full"
             >
@@ -412,8 +383,8 @@ const Dashboard = () => {
               </div>
               <div className="absolute inset-0 bg-gradient-to-r from-green-500/5 to-green-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </button>
-            
-            <button 
+
+            <button
               onClick={() => handleQuickAction('inquiries')}
               className="group relative overflow-hidden bg-white border-2 border-orange-200 rounded-xl p-3 hover:border-orange-400 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 w-full"
             >
