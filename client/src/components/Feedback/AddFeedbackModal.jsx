@@ -64,7 +64,12 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
   // Set products when feedback is loaded
   useEffect(() => {
     if (feedback && feedback.products && Array.isArray(feedback.products)) {
-      setSelectedProducts(feedback.products);
+      // Transform products to match the expected format
+      const transformedProducts = feedback.products.map(productItem => ({
+        product: productItem.product?._id || productItem.product || '',
+        quantity: productItem.quantity || 1
+      }));
+      setSelectedProducts(transformedProducts);
     }
   }, [feedback]);
 
@@ -81,7 +86,12 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
 
         // Set products for existing feedback
         if (feedback.products && Array.isArray(feedback.products)) {
-          setSelectedProducts(feedback.products);
+          // Transform products to match the expected format
+          const transformedProducts = feedback.products.map(productItem => ({
+            product: productItem.product?._id || productItem.product || '',
+            quantity: productItem.quantity || 1
+          }));
+          setSelectedProducts(transformedProducts);
         }
 
         // Set audio data for existing feedback

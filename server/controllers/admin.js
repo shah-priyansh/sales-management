@@ -37,9 +37,10 @@ const getDashboard = async (req, res) => {
       .limit(5);
 
     const recentInquiries = await ClientFeedback.find()
-      .select('client lead products quantity audio notes createdBy createdAt')
+      .select('client lead products audio notes createdBy createdAt')
       .populate('client', 'name company phone')
       .populate('createdBy', 'firstName lastName')
+      .populate('products.product', 'productName')
       .sort({ createdAt: -1 })
       .limit(5);
 
