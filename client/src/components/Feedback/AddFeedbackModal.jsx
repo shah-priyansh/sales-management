@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
 import { addFeedbackFetch, updateFeedbackFetch, generateSignedUrlFetch, uploadAudioToS3, selectSignedUrl, selectUploadSuccess } from '../../store/slices/feedbackSlice';
 import { fetchClients, selectClients, selectClientsLoading } from '../../store/slices/clientSlice';
+import { fetchProducts, selectProducts, selectProductsLoading } from '../../store/slices/productSlice';
 import { Button, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea, Badge } from '../ui';
 const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
   const dispatch = useDispatch();
@@ -17,6 +18,7 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
   const [audioBlob, setAudioBlob] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioElement, setAudioElement] = useState(null);
+  const [selectedProducts, setSelectedProducts] = useState([]);
 
   const {
     register,
@@ -29,8 +31,6 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
     defaultValues: {
       client: '',
       lead: 'Green',
-      products: '',
-      quantity: 1,
       notes: '',
       audio: null
     }
@@ -39,6 +39,8 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
   // Redux selectors
   const clients = useSelector(selectClients);
   const clientsLoading = useSelector(selectClientsLoading);
+  const products = useSelector(selectProducts);
+  const productsLoading = useSelector(selectProductsLoading);
   const signedUrl = useSelector(selectSignedUrl);
   const uploadSuccess = useSelector(selectUploadSuccess);
 
@@ -51,7 +53,7 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
     
     // Set client selection after clients are loaded
     if (feedback && clients.length > 0 && !clientsLoading) {
-      console.log('Feedback client object:', feedback.client);
+      console.log('Inquiries client object:', feedback.client);
       const clientId = feedback.client?._id || '';
       console.log('Setting client after clients loaded:', clientId, 'Available clients:', clients.map(c => ({ id: c._id, name: c.name })));
       setSelectedClient(clientId);
@@ -59,17 +61,28 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
     }
   }, [clients, clientsLoading, feedback, setValue]);
 
+  // Set products when feedback is loaded
+  useEffect(() => {
+    if (feedback && feedback.products && Array.isArray(feedback.products)) {
+      setSelectedProducts(feedback.products);
+    }
+  }, [feedback]);
+
   useEffect(() => {
     if (isOpen) {
-      console.log('Modal opened, fetching clients...');
+      console.log('Modal opened, fetching clients and products...');
       dispatch(fetchClients());
+      dispatch(fetchProducts({ isActive: true }));
 
       if (feedback) {
         console.log('Setting feedback data:', feedback);
         setValue('lead', feedback.lead || 'Green');
-        setValue('products', feedback.products || '');
-        setValue('quantity', feedback.quantity || 1);
         setValue('notes', feedback.notes || '');
+
+        // Set products for existing feedback
+        if (feedback.products && Array.isArray(feedback.products)) {
+          setSelectedProducts(feedback.products);
+        }
 
         // Set audio data for existing feedback
         if (feedback.audio?.key) {
@@ -83,6 +96,7 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
       } else {
         reset();
         setSelectedClient('');
+        setSelectedProducts([]);
         setAudioFile(null);
         setAudioUrl(null);
         setAudioBlob(null);
@@ -98,6 +112,20 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
 
   const handleLeadChange = (lead) => {
     setValue('lead', lead);
+  };
+
+  const addProduct = () => {
+    setSelectedProducts([...selectedProducts, { product: '', quantity: 1 }]);
+  };
+
+  const removeProduct = (index) => {
+    setSelectedProducts(selectedProducts.filter((_, i) => i !== index));
+  };
+
+  const updateProduct = (index, field, value) => {
+    const updated = [...selectedProducts];
+    updated[index] = { ...updated[index], [field]: value };
+    setSelectedProducts(updated);
   };
 
   const getLeadBadgeVariant = (lead) => {
@@ -190,7 +218,7 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
   const playAudio = async () => {
     // Don't play if audioUrl is just a flag for existing audio
     if (audioUrl === 'existing-audio') {
-      toast.error('Cannot play existing audio in edit mode. Use the play button in the feedback list.');
+      toast.error('Cannot play existing audio in edit mode. Use the play button in the Inquiries list.');
       return;
     }
 
@@ -266,24 +294,39 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
 
   const onSubmit = async (data) => {
     try {
+      // Validate products
+      if (selectedProducts.length === 0) {
+        toast.error('Please add at least one product');
+        return;
+      }
+
+      const validProducts = selectedProducts.filter(p => p.product && p.quantity > 0);
+      if (validProducts.length === 0) {
+        toast.error('Please select valid products with quantities');
+        return;
+      }
+
       const feedbackData = {
         ...data,
         client: selectedClient,
-        quantity: parseInt(data.quantity),
+        products: validProducts.map(p => ({
+          product: p.product,
+          quantity: parseInt(p.quantity)
+        })),
         audio: data.audio || null
       };
 
       if (feedback) {
         await dispatch(updateFeedbackFetch({ id: feedback._id, data: feedbackData })).unwrap();
-        toast.success('Feedback updated successfully');
+        toast.success('Inquiries updated successfully');
       } else {
         await dispatch(addFeedbackFetch(feedbackData)).unwrap();
-        toast.success('Feedback created successfully');
+        toast.success('Inquiries created successfully');
       }
 
       onClose();
     } catch (error) {
-      toast.error(error.message || 'Failed to save feedback');
+      toast.error(error.message || 'Failed to save Inquiries');
     }
   };
 
@@ -306,10 +349,10 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MessageSquare className="h-5 w-5" />
-            {feedback ? 'Edit Feedback' : 'Add New Feedback'}
+            {feedback ? 'Edit Inquiries' : 'Add New Inquiries'}
           </DialogTitle>
           <DialogDescription>
-            {feedback ? 'Update the feedback information' : 'Create a new client feedback record'}
+            {feedback ? 'Update the Inquiries information' : 'Create a new client Inquiries record'}
           </DialogDescription>
         </DialogHeader>
 
@@ -372,37 +415,81 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Products */}
-            <div className="space-y-2">
+          {/* Products Selection */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-gray-700">Products *</label>
-              <Input
-                {...register('products', { required: 'Products is required' })}
-                placeholder="Enter products discussed"
-                className={errors.products ? 'border-red-500' : ''}
-              />
-              {errors.products && (
-                <p className="text-sm text-red-500">{errors.products.message}</p>
-              )}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addProduct}
+                className="flex items-center gap-2"
+              >
+                <MessageSquare className="h-4 w-4" />
+                Add Product
+              </Button>
             </div>
 
-            {/* Quantity */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Quantity *</label>
-              <Input
-                type="number"
-                min="0"
-                {...register('quantity', {
-                  required: 'Quantity is required',
-                  min: { value: 0, message: 'Quantity must be 0 or greater' }
-                })}
-                placeholder="Enter quantity"
-                className={errors.quantity ? 'border-red-500' : ''}
-              />
-              {errors.quantity && (
-                <p className="text-sm text-red-500">{errors.quantity.message}</p>
-              )}
-            </div>
+            {selectedProducts.length === 0 ? (
+              <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-300 rounded-lg">
+                <MessageSquare className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                <p>No products selected</p>
+                <p className="text-sm">Click "Add Product" to get started</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {selectedProducts.map((productItem, index) => (
+                  <div key={index} className="flex items-center gap-3 p-3 border rounded-lg bg-gray-50">
+                    <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs font-medium text-gray-600">Product</label>
+                        <Select
+                          value={productItem.product}
+                          onValueChange={(value) => updateProduct(index, 'product', value)}
+                        >
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="Select product" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {productsLoading ? (
+                              <SelectItem value="loading" disabled>Loading products...</SelectItem>
+                            ) : products.length === 0 ? (
+                              <SelectItem value="no-products" disabled>No products available</SelectItem>
+                            ) : (
+                              products.map((product) => (
+                                <SelectItem key={product._id} value={product._id}>
+                                  {product.productName}
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-gray-600">Quantity</label>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={productItem.quantity}
+                          onChange={(e) => updateProduct(index, 'quantity', parseInt(e.target.value) || 1)}
+                          className="h-9"
+                        />
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => removeProduct(index)}
+                      className="text-red-500 hover:text-red-700 h-9 w-9 p-0"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Notes */}
@@ -504,7 +591,7 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
             </Button>
             <Button
               type="submit"
-              disabled={isUploading || !selectedClient}
+              disabled={isUploading || !selectedClient || selectedProducts.length === 0}
               className="flex items-center gap-2"
             >
               {isUploading ? (
@@ -515,7 +602,7 @@ const AddFeedbackModal = ({ isOpen, onClose, feedback = null }) => {
               ) : (
                 <>
                   <MessageSquare className="h-4 w-4" />
-                  {feedback ? 'Update Feedback' : 'Create Feedback'}
+                  {feedback ? 'Update Inquiries' : 'Create Inquiries'}
                 </>
               )}
             </Button>

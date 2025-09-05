@@ -269,8 +269,7 @@ const FeedbackManagement = () => {
                 <TableRow className="bg-white hover:bg-white">
                   <TableHead className="w-[20%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Client</TableHead>
                   <TableHead className="w-[10%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Lead Status</TableHead>
-                  <TableHead className="w-[20%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Products</TableHead>
-                  <TableHead className="w-[10%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Quantity</TableHead>
+                  <TableHead className="w-[30%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Products</TableHead>
                   <TableHead className="w-[10%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Audio</TableHead>
                   <TableHead className="w-[15%] bg-white border-b-0 px-4 py-3 text-left font-semibold text-gray-900">Date</TableHead>
                   <TableHead className="w-[10%] bg-white border-b-0 px-4 py-3 text-right font-semibold text-gray-900">Actions</TableHead>
@@ -279,15 +278,15 @@ const FeedbackManagement = () => {
               <TableBody>
                 {feedbacksLoading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="p-0">
-                      <LoadingTable columns={7} rows={7} className="border-0" />
+                    <TableCell colSpan={6} className="p-0">
+                      <LoadingTable columns={6} rows={7} className="border-0" />
                     </TableCell>
                   </TableRow>
                 ) : feedbacksError ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="p-0">
+                    <TableCell colSpan={6} className="p-0">
                       <ErrorTable
-                        columns={7}
+                        columns={6}
                         message="Failed to load feedbacks"
                         description="There was an error loading the feedbacks. Please try again."
                         onRetry={() => dispatch(fetchFeedbacks({ page: currentPage, search: debouncedSearchTerm, limit: 20 }))}
@@ -297,9 +296,9 @@ const FeedbackManagement = () => {
                   </TableRow>
                 ) : feedbacks.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="p-0">
+                    <TableCell colSpan={6} className="p-0">
                       <EmptyTable
-                        columns={7}
+                        columns={6}
                         message={debouncedSearchTerm ? 'No feedbacks found' : 'No feedbacks yet'}
                         description={debouncedSearchTerm ? 'No feedbacks match your search criteria.' : 'Create your first feedback to get started.'}
                         className="border-0"
@@ -327,13 +326,22 @@ const FeedbackManagement = () => {
                       </TableCell>
 
                       <TableCell className="px-4 py-3">
-                        <span className="text-sm text-gray-900 truncate" title={feedback.products}>
-                          {feedback.products}
-                        </span>
-                      </TableCell>
-
-                      <TableCell className="px-4 py-3">
-                        <span className="text-sm font-medium text-gray-900">{feedback.quantity}</span>
+                        <div className="space-y-1">
+                          {feedback.products && Array.isArray(feedback.products) ? (
+                            feedback.products.map((productItem, index) => (
+                              <div key={index} className="flex items-center justify-between text-xs bg-gray-50 px-2 py-1 rounded">
+                                <span className="font-medium text-gray-900">
+                                  {productItem.product?.productName || 'Unknown Product'}
+                                </span>
+                                <span className="text-gray-600 ml-2">
+                                  Qty: {productItem.quantity}
+                                </span>
+                              </div>
+                            ))
+                          ) : (
+                            <span className="text-sm text-gray-500">No products</span>
+                          )}
+                        </div>
                       </TableCell>
 
                       <TableCell className="px-4 py-3">

@@ -19,16 +19,20 @@ const createFeedbackValidation = [
     .withMessage('Invalid date format'),
 
   body('products')
-    .notEmpty()
-    .withMessage('Products is required')
-    .isLength({ min: 1, max: 500 })
-    .withMessage('Products must be between 1 and 500 characters'),
+    .isArray({ min: 1 })
+    .withMessage('At least one product is required'),
 
-  body('quantity')
+  body('products.*.product')
     .notEmpty()
-    .withMessage('Quantity is required')
+    .withMessage('Product ID is required')
+    .isMongoId()
+    .withMessage('Invalid product ID'),
+
+  body('products.*.quantity')
+    .notEmpty()
+    .withMessage('Product quantity is required')
     .isInt({ min: 0 })
-    .withMessage('Quantity must be a non-negative integer'),
+    .withMessage('Product quantity must be a non-negative integer'),
 
   body('audio.url')
     .optional()
@@ -64,13 +68,18 @@ const updateFeedbackValidation = [
 
   body('products')
     .optional()
-    .isLength({ min: 1, max: 500 })
-    .withMessage('Products must be between 1 and 500 characters'),
+    .isArray({ min: 1 })
+    .withMessage('At least one product is required'),
 
-  body('quantity')
+  body('products.*.product')
+    .optional()
+    .isMongoId()
+    .withMessage('Invalid product ID'),
+
+  body('products.*.quantity')
     .optional()
     .isInt({ min: 0 })
-    .withMessage('Quantity must be a non-negative integer'),
+    .withMessage('Product quantity must be a non-negative integer'),
 
   body('audio.url')
     .optional()

@@ -3,6 +3,7 @@ const { S3Client, PutObjectCommand, GetObjectCommand } = require('@aws-sdk/clien
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const ClientFeedback = require('../models/ClientFeedback');
 const Client = require('../models/Client');
+const Product = require('../models/Product');
 require('dotenv').config();
 
 
@@ -64,7 +65,7 @@ const createFeedback = async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { client, lead, date, products, quantity, audio, notes } = req.body;
+    const { client, lead, date, products, audio, notes } = req.body;
 
     const clientExists = await Client.findById(client);
     if (!clientExists) {
@@ -75,12 +76,32 @@ const createFeedback = async (req, res) => {
       return res.status(403).json({ message: 'Access denied to this client' });
     }
 
+    // Validate products
+    if (!products || !Array.isArray(products) || products.length === 0) {
+      return res.status(400).json({ message: 'At least one product is required' });
+    }
+
+    // Validate each product
+    for (const productItem of products) {
+      if (!productItem.product || !productItem.quantity) {
+        return res.status(400).json({ message: 'Each product must have product ID and quantity' });
+      }
+      
+      const productExists = await Product.findById(productItem.product);
+      if (!productExists) {
+        return res.status(400).json({ message: `Product with ID ${productItem.product} not found` });
+      }
+      
+      if (productItem.quantity < 0) {
+        return res.status(400).json({ message: 'Product quantity must be 0 or greater' });
+      }
+    }
+
     const feedback = new ClientFeedback({
       client,
       lead,
       date: date || new Date(),
       products,
-      quantity,
       audio,
       notes,
       createdBy: req.user.id
@@ -90,7 +111,8 @@ const createFeedback = async (req, res) => {
 
     const feedbackResponse = await ClientFeedback.findById(feedback._id)
       .populate('client', 'name company phone')
-      .populate('createdBy', 'name email');
+      .populate('createdBy', 'name email')
+      .populate('products.product', 'productName');
 
     res.status(201).json(feedbackResponse);
   } catch (error) {
@@ -123,6 +145,7 @@ const getAllFeedback = async (req, res) => {
     const feedback = await ClientFeedback.find(query)
       .populate('client', 'name company phone area')
       .populate('createdBy', 'name email')
+      .populate('products.product', 'productName')
       .sort({ date: -1, createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
@@ -148,6 +171,7 @@ const getFeedbackByClient = async (req, res) => {
     const feedback = await ClientFeedback.find({ client, isActive: true })
       .populate('client', 'name company phone area')
       .populate('createdBy', 'name email')
+      .populate('products.product', 'productName')
       .sort({ date: -1, createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
@@ -179,7 +203,8 @@ const getFeedbackById = async (req, res) => {
 
     const feedback = await ClientFeedback.findOne(query)
       .populate('client', 'name company phone area')
-      .populate('createdBy', 'name email');
+      .populate('createdBy', 'name email')
+      .populate('products.product', 'productName');
 
     if (!feedback) {
       return res.status(404).json({ message: 'Feedback not found' });
@@ -223,7 +248,8 @@ const updateFeedback = async (req, res) => {
       updateData,
       { new: true, runValidators: true }
     ).populate('client', 'name company phone area')
-      .populate('createdBy', 'name email');
+      .populate('createdBy', 'name email')
+      .populate('products.product', 'productName');
 
     res.json(feedback);
   } catch (error) {
@@ -288,7 +314,7 @@ const getFeedbackStats = async (req, res) => {
         $group: {
           _id: '$lead',
           count: { $sum: 1 },
-          totalQuantity: { $sum: '$quantity' }
+          totalQuantity: { $sum: { $sum: '$products.quantity' } }
         }
       }
     ]);

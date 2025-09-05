@@ -16,16 +16,18 @@ const clientFeedbackSchema = new mongoose.Schema({
     required: true,
     default: Date.now
   },
-  products: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  quantity: {
-    type: Number,
-    required: true,
-    min: 0
-  },
+  products: [{
+    product: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Product',
+      required: true
+    },
+    quantity: {
+      type: Number,
+      required: true,
+      min: 0
+    }
+  }],
   audio: {
     key: {
       type: String,
